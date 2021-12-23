@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RabbitListener(queues = "${file.queue.name:file-ps-queue}")
 @Component
 @Slf4j
-public class PsReceiver {
+public class PsListener {
 
 	private final ApiClient client;
 
@@ -43,7 +43,7 @@ public class PsReceiver {
 	 *
 	 * @param client the client
 	 */
-	public PsReceiver(ApiClient client) {
+	public PsListener(ApiClient client) {
 		super();
 		this.client = client;
 		init();

@@ -35,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 @RabbitListener(queues = "${contact.queue.name:contact-queue}")
 @Component
 @Slf4j
-public class ContactInfosReceiver {
+public class ContactInfosListener {
 
 	private final ApiClient client;
 	
@@ -53,7 +53,7 @@ public class ContactInfosReceiver {
 	 *
 	 * @param client the client
 	 */
-	public ContactInfosReceiver(ApiClient client) {
+	public ContactInfosListener(ApiClient client) {
 		super();
 		this.client = client;
 		init();
