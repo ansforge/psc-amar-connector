@@ -1,0 +1,27 @@
+{
+  "nationalId" : "899700245220",
+  "firstName" : "NORBERT",
+  "lastName" : "KINE-CH",
+  "employeeType" : "Masseur-Kinésithérapeute",
+  "userContactInfo" : { },
+  "userProfessionalInfos" : [ {
+    "professionCode" : "70",
+    "professionalCategoryCode" : "C",
+    "expertiseTypeCode" : "",
+    "expertiseCode" : "",
+    "professionalCivilityTitle" : "DR",
+    "professionalLastName" : "KINE-CH",
+    "professionalFirstName" : "NORBERT"
+  } ],
+  "userCivilStatusInfo" : {
+    "lastName" : "KINE-CH",
+    "firstnames" : "NORBERT",
+    "birthdate" : "15/05/1990",
+    "birthTownCode" : "75101",
+    "birthCountryCode" : "99000",
+    "birthplace" : "Paris 1er Arrondissement",
+    "genderCode" : "M",
+    "phone" : "",
+    "email" : ""
+  }
+}
