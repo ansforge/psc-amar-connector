@@ -103,6 +103,7 @@ public class Listener {
 	 */
     @RabbitListener(queues = QUEUE_CONTACT_MESSAGES)
 	public void receiveContactMessage(Message message) throws PscUpdateException {
+    	log.info("Receiving message...");
 		String messageBody = new String(message.getBody());
 		ContactInfosWithNationalId contactInput = json.fromJson(messageBody, ContactInfosWithNationalId.class);
 		// Get the PS to update
@@ -114,7 +115,7 @@ public class Listener {
 			psapi.updatePs(ps);
 		}catch (RestClientResponseException e) {
 			log.error("PS {} not updated in DB.", ps.getNationalId(), e.getLocalizedMessage());
-		} catch (RestClientException e) {
+		} catch (Exception e) {
 			log.error("PS {} not updated in DB (It is requeued).", ps.getNationalId(), e);
 			// Throw exception to requeue message
 				throw new PscUpdateException(e);
