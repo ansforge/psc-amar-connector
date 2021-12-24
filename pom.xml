@@ -24,6 +24,7 @@
 	
   <modules>
 	<module>psc-api</module>
+	<module>in-user-api</module>
 	<module>async-listener</module>
   </modules>
   
