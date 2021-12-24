@@ -9,13 +9,25 @@ import fr.ans.psc.ApiClient;
 @Configuration
 public class ApiClientConfig {
 
-	@Value("${api.base.url}")
-	private String apiBaseUrl;
+	
+	@Value("in.api.url")
+	private String inApiUrl;
+	
+	@Value("psc.api.url")
+	private String pscApiUrl;
 
 	@Bean
 	public ApiClient apiclient() {
 		ApiClient client = new ApiClient();
-		client.setBasePath(apiBaseUrl);
+		client.setBasePath(pscApiUrl);
+		return client;
+
+	}
+	
+	@Bean
+	public fr.ans.in.user.ApiClient inApiclient() {
+		fr.ans.in.user.ApiClient client = new fr.ans.in.user.ApiClient();
+		client.setBasePath(inApiUrl);
 		return client;
 
 	}

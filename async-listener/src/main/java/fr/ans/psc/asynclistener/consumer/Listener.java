@@ -4,11 +4,11 @@
 package fr.ans.psc.asynclistener.consumer;
 
 import static fr.ans.psc.asynclistener.config.SimpleDLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES;
+import static fr.ans.psc.asynclistener.config.SimpleDLQAmqpConfiguration.QUEUE_PS_MESSAGES;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.client.RestClientException;
@@ -44,12 +44,6 @@ public class Listener {
 	private StructureApi structureapi;
 	
 	private UserApi userApi;
-	
-	@Value("in.api.url")
-	private String inApiUrl;
-	
-	@Value("psc.api.url")
-	private String pscApiUrl;
 
 	Gson json = new Gson();
 
@@ -67,8 +61,6 @@ public class Listener {
 	}
 
 	private void init() {
-		client.setBasePath(pscApiUrl);
-		inClient.setBasePath(inApiUrl);
 		psapi = new PsApi(client);
 		structureapi = new StructureApi(client);
 		userApi = new UserApi(inClient);
@@ -86,7 +78,7 @@ public class Listener {
 	 * @param message the message
 	 * @throws PscUpdateException
 	 */
-    @RabbitListener(queues = "${file.queue.name:file-ps-queue}")
+    @RabbitListener(queues = QUEUE_PS_MESSAGES)
 	public void receivePsMessage(Message message) throws PscUpdateException {
 		String messageBody = new String(message.getBody());
 		PsAndStructure wrapper = json.fromJson(messageBody, PsAndStructure.class);
