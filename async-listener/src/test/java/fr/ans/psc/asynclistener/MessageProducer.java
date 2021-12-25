@@ -4,7 +4,7 @@ package fr.ans.psc.asynclistener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
-import fr.ans.psc.asynclistener.config.SimpleDLQAmqpConfiguration;
+import fr.ans.psc.asynclistener.config.DLQAmqpConfiguration;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -19,6 +19,6 @@ public class MessageProducer {
 
     public void sendContactMessage(String message) {
         log.info("Sending message...");
-        rabbitTemplate.convertAndSend(SimpleDLQAmqpConfiguration.EXCHANGE_MESSAGES, SimpleDLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES, message);
+        rabbitTemplate.convertAndSend(DLQAmqpConfiguration.EXCHANGE_MESSAGES, DLQAmqpConfiguration.ROUTING_KEY_MESSAGES_QUEUE, message);
     }
 }

@@ -25,7 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2021-12-23T20:51:16.071Z[GMT]")@Component("fr.ans.in.user.api.UserApi")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2021-12-25T17:18:27.062Z[GMT]")@Component("fr.ans.in.user.api.UserApi")
 public class UserApi {
     private ApiClient apiClient;
 
@@ -99,11 +99,12 @@ public class UserApi {
      * <p><b>200</b> - OK
      * <p><b>404</b> - User Not Found
      * <p><b>409</b> - Email Already Taken
+     * @param nationalId  (required)
      * @param body  (optional)
      * @throws RestClientException if an error occurs while attempting to invoke the API
      */
-    public void putUsersContactInfos(ContactInfos body) throws RestClientException {
-        putUsersContactInfosWithHttpInfo(body);
+    public void putUsersContactInfos(String nationalId, ContactInfos body) throws RestClientException {
+        putUsersContactInfosWithHttpInfo(nationalId, body);
     }
 
     /**
@@ -112,17 +113,23 @@ public class UserApi {
      * <p><b>200</b> - OK
      * <p><b>404</b> - User Not Found
      * <p><b>409</b> - Email Already Taken
+     * @param nationalId  (required)
      * @param body  (optional)
      * @return ResponseEntity&lt;Void&gt;
      * @throws RestClientException if an error occurs while attempting to invoke the API
      */
-    public ResponseEntity<Void> putUsersContactInfosWithHttpInfo(ContactInfos body) throws RestClientException {
+    public ResponseEntity<Void> putUsersContactInfosWithHttpInfo(String nationalId, ContactInfos body) throws RestClientException {
         Object postBody = body;
+        // verify the required parameter 'nationalId' is set
+        if (nationalId == null) {
+            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST, "Missing the required parameter 'nationalId' when calling putUsersContactInfos");
+        }
         String path = UriComponentsBuilder.fromPath("/users").build().toUriString();
         
         final MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<String, String>();
         final HttpHeaders headerParams = new HttpHeaders();
         final MultiValueMap<String, Object> formParams = new LinkedMultiValueMap<String, Object>();
+        queryParams.putAll(apiClient.parameterToMultiValueMap(null, "nationalId", nationalId));
 
         final String[] accepts = {  };
         final List<MediaType> accept = apiClient.selectHeaderAccept(accepts);

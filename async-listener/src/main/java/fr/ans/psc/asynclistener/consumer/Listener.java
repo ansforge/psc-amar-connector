@@ -3,20 +3,22 @@
  */
 package fr.ans.psc.asynclistener.consumer;
 
-import static fr.ans.psc.asynclistener.config.SimpleDLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES;
-import static fr.ans.psc.asynclistener.config.SimpleDLQAmqpConfiguration.QUEUE_PS_MESSAGES;
+import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES;
+import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PS_MESSAGES;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.google.gson.Gson;
 
 import fr.ans.in.user.api.UserApi;
+import fr.ans.in.user.model.ContactInfos;
 import fr.ans.psc.ApiClient;
 import fr.ans.psc.api.PsApi;
 import fr.ans.psc.api.StructureApi;
@@ -67,8 +69,8 @@ public class Listener {
 	}
 
     @Bean
-    public DLQCustomAmqpContainer dlqAmqpContainer() {
-        return new DLQCustomAmqpContainer(rabbitTemplate);
+    public DLQContactInfoAmqpContainer dlqAmqpContainer() {
+        return new DLQContactInfoAmqpContainer(rabbitTemplate);
     }
     
     /**
@@ -113,6 +115,7 @@ public class Listener {
 		// Update PS in DB
 		try {
 			psapi.updatePs(ps);
+			log.info("Contact informations sent to API : {}", messageBody);
 		}catch (RestClientResponseException e) {
 			log.error("PS {} not updated in DB.", ps.getNationalId(), e.getLocalizedMessage());
 		} catch (Exception e) {
@@ -122,10 +125,10 @@ public class Listener {
 		}
 		
 		try {
-			fr.ans.in.user.model.ContactInfos contactOutput = new fr.ans.in.user.model.ContactInfos();
+			ContactInfos contactOutput = new ContactInfos();
 			contactOutput.setEmail(contactInput.getEmail());
 			contactOutput.setPhone(contactInput.getPhone());
-			userApi.putUsersContactInfos(contactOutput);
+			userApi.putUsersContactInfos(contactInput.getNationalId(), contactOutput);
 		}catch (RestClientResponseException e) {
 			log.error("PS {} not updated at IN.", ps.getNationalId(), e.getLocalizedMessage());
 		} catch (RestClientException e) {

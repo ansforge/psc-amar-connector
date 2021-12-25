@@ -55,7 +55,7 @@ import fr.ans.in.user.auth.HttpBasicAuth;
 import fr.ans.in.user.auth.ApiKeyAuth;
 import fr.ans.in.user.auth.OAuth;
 
-@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2021-12-23T20:51:16.071Z[GMT]")@Component("fr.ans.in.user.ApiClient")
+@javax.annotation.Generated(value = "io.swagger.codegen.v3.generators.java.JavaClientCodegen", date = "2021-12-25T17:18:27.062Z[GMT]")@Component("fr.ans.in.user.ApiClient")
 public class ApiClient {
     public enum CollectionFormat {
         CSV(","), TSV("\t"), SSV(" "), PIPES("|"), MULTI(null);

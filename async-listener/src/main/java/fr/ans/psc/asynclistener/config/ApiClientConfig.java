@@ -10,10 +10,10 @@ import fr.ans.psc.ApiClient;
 public class ApiClientConfig {
 
 	
-	@Value("${in.api.url:http://localhost}")
+	@Value("${in.api.url:http://localhost/api/lura/ing/rass}")
 	private String inApiUrl;
 	
-	@Value("${psc.api.url:http://localhost}")
+	@Value("${psc.api.url:http://localhost/api}")
 	private String pscApiUrl;
 
 	@Bean

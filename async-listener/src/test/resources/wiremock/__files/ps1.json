@@ -1,0 +1,46 @@
+{
+    "idType": "8",
+    "id": "1",
+    "nationalId": "1",
+    "lastName": "POISSONNIER",
+    "firstName": "CHRISTIAN\"MARCEL\"",
+    "dateOfBirth": "04/11/1973",
+    "birthAddressCode": "94017",
+    "birthCountryCode": "99000",
+    "birthAddress": "",
+    "genderCode": "M",
+    "phone": "0147107010",
+    "email": "dr.poissonnier@free.fr",
+    "salutationCode": "M",
+    "professions": [
+        {
+            "code": "10",
+            "categoryCode": "C",
+            "salutationCode": "DR",
+            "lastName": "POISSONNIER",
+            "firstName": "CHRISTIAN",
+            "expertises": [
+                {
+                    "typeCode": "S",
+                    "code": "SM26",
+                    "expertiseId": "SSM26"
+                }
+            ],
+            "workSituations": [
+                {
+                    "modeCode": "S",
+                    "activitySectorCode": "SA01",
+                    "pharmacistTableSectionCode": "",
+                    "roleCode": "",
+                    "structures": [
+                        {
+                            "structureId": "F920100054"
+                        }
+                    ],
+                    "situId": "SSA01"
+                }
+            ],
+            "exProId": "10C"
+        }
+    ]
+}
