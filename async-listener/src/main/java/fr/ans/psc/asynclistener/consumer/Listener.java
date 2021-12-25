@@ -117,7 +117,9 @@ public class Listener {
 			psapi.updatePs(ps);
 			log.info("Contact informations sent to API : {}", messageBody);
 		}catch (RestClientResponseException e) {
-			log.error("PS {} not updated in DB.", ps.getNationalId(), e.getLocalizedMessage());
+			log.error("Contact infos of PS {} not updated in DB (Not requeued) ; content : {}", ps.getNationalId(), messageBody );
+			//Exit because we don't want to desynchronize PSC DB and IN data
+			return;
 		} catch (Exception e) {
 			log.error("PS {} not updated in DB (It is requeued).", ps.getNationalId(), e);
 			// Throw exception to requeue message
@@ -129,6 +131,7 @@ public class Listener {
 			contactOutput.setEmail(contactInput.getEmail());
 			contactOutput.setPhone(contactInput.getPhone());
 			userApi.putUsersContactInfos(contactInput.getNationalId(), contactOutput);
+			log.info("Contact informations sent to IN : {}", messageBody);
 		}catch (RestClientResponseException e) {
 			log.error("PS {} not updated at IN.", ps.getNationalId(), e.getLocalizedMessage());
 		} catch (RestClientException e) {
