@@ -92,7 +92,8 @@ public class Listener {
 				structureapi.createNewStructure(wrapper.getStructure());
 			}
 		}catch (RestClientException e) {
-			log.error("PS {} not updated in DB.", wrapper.getPs().getNationalId(), e);
+			log.error("PS {} not updated in DB.", wrapper.getPs().getNationalId());
+			log.error("Error : ", e);
 		}
 	}
 
