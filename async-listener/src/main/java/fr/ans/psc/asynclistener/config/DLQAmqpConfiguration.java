@@ -17,6 +17,8 @@ public class DLQAmqpConfiguration {
     public static final String QUEUE_MESSAGES_DLQ = QUEUE_CONTACT_MESSAGES + ".dlq";
     public static final String EXCHANGE_MESSAGES = "contact-messages-exchange";
     public static final String ROUTING_KEY_MESSAGES_QUEUE = "ROUTING_KEY_CONTACT_MESSAGES_QUEUE";
+    public static final String QUEUE_PARKING_LOT = QUEUE_CONTACT_MESSAGES + ".parking-lot";
+    public static final String EXCHANGE_PARKING_LOT = QUEUE_CONTACT_MESSAGES + "exchange.parking-lot";
 
 
     @Bean
@@ -51,4 +53,18 @@ public class DLQAmqpConfiguration {
         return BindingBuilder.bind(deadLetterQueue()).to(deadLetterExchange());
     }
 
+    @Bean
+    FanoutExchange parkingLotExchange() {
+        return new FanoutExchange(EXCHANGE_PARKING_LOT);
+    }
+     
+    @Bean
+    Queue parkingLotQueue() {
+        return QueueBuilder.durable(QUEUE_PARKING_LOT).build();
+    }
+     
+    @Bean
+    Binding parkingLotBinding() {
+        return BindingBuilder.bind(parkingLotQueue()).to(parkingLotExchange());
+    }
 }

@@ -2,6 +2,8 @@ package fr.ans.psc.asynclistener.consumer;
 
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.EXCHANGE_MESSAGES;
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_MESSAGES_DLQ;
+import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PARKING_LOT;
+import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.EXCHANGE_PARKING_LOT;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -27,8 +29,9 @@ public class DLQContactInfoAmqpContainer {
         if (retriesCnt == null)
             retriesCnt = 1;
         if (retriesCnt > MAX_RETRIES_COUNT) {
-            log.info("Discarding message, content : {}", new String(failedMessage.getBody()));
-            // TODO Mail to admin with message content
+        	log.info("Sending message to the parking lot queue");
+            rabbitTemplate.send(EXCHANGE_PARKING_LOT, 
+              failedMessage.getMessageProperties().getReceivedRoutingKey(), failedMessage);
             return;
         }
         log.info("Retrying message for the {} time", retriesCnt);
