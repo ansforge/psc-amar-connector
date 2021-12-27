@@ -1,3 +1,6 @@
+/*
+ * Copyright A.N.S 2021
+ */
 package fr.ans.psc.asynclistener.config;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -6,6 +9,9 @@ import org.springframework.context.annotation.Configuration;
 
 import fr.ans.psc.ApiClient;
 
+/**
+ * The Class ApiClientConfig.
+ */
 @Configuration
 public class ApiClientConfig {
 
@@ -16,6 +22,11 @@ public class ApiClientConfig {
 	@Value("${psc.api.url:http://localhost/api}")
 	private String pscApiUrl;
 
+	/**
+	 * Apiclient.
+	 *
+	 * @return the api client
+	 */
 	@Bean
 	public ApiClient apiclient() {
 		ApiClient client = new ApiClient();
@@ -24,6 +35,11 @@ public class ApiClientConfig {
 
 	}
 	
+	/**
+	 * In apiclient.
+	 *
+	 * @return the fr.ans.in.user. api client
+	 */
 	@Bean
 	public fr.ans.in.user.ApiClient inApiclient() {
 		fr.ans.in.user.ApiClient client = new fr.ans.in.user.ApiClient();

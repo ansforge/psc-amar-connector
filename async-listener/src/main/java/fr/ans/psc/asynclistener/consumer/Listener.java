@@ -21,7 +21,6 @@ import fr.ans.in.user.model.ContactInfos;
 import fr.ans.psc.ApiClient;
 import fr.ans.psc.api.PsApi;
 import fr.ans.psc.api.StructureApi;
-import fr.ans.psc.asynclistener.component.exception.PscUpdateException;
 import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import fr.ans.psc.asynclistener.model.PsAndStructure;
 import fr.ans.psc.model.Ps;
@@ -46,12 +45,15 @@ public class Listener {
 	
 	private UserApi userApi;
 
+	/** The json. */
 	Gson json = new Gson();
 
 	/**
 	 * Instantiates a new receiver.
 	 *
 	 * @param client the client
+	 * @param inClient the in client
+	 * @param rabbitTemplate the rabbit template
 	 */
 	public Listener(ApiClient client, fr.ans.in.user.ApiClient inClient, RabbitTemplate rabbitTemplate) {
 		super();
@@ -67,18 +69,23 @@ public class Listener {
 		userApi = new UserApi(inClient);
 	}
 
+    /**
+     * Dlq amqp container.
+     *
+     * @return the DLQ contact info amqp container
+     */
     @Bean
     public DLQContactInfoAmqpContainer dlqAmqpContainer() {
         return new DLQContactInfoAmqpContainer(rabbitTemplate);
     }
     
     /**
-	 * process message (Update the PS or create it if not exists). Update structure
-	 * as well.
-	 * 
-	 * @param message the message
-	 * @throws PscUpdateException
-	 */
+     * process message (Update the PS or create it if not exists). Update structure
+     * as well.
+     *
+     * @param message the message
+     * @throws PscUpdateException the psc update exception
+     */
     @RabbitListener(queues = QUEUE_PS_MESSAGES)
 	public void receivePsMessage(Message message) throws PscUpdateException {
 		String messageBody = new String(message.getBody());
@@ -99,9 +106,9 @@ public class Listener {
     
 	/**
 	 * process message : Update mail and phone number in database ans push modification to IN Api.
-	 * 
+	 *
 	 * @param message the message
-	 * @throws PscUpdateException 
+	 * @throws PscUpdateException the psc update exception
 	 */
     @RabbitListener(queues = QUEUE_CONTACT_MESSAGES)
 	public void receiveContactMessage(Message message) throws PscUpdateException {

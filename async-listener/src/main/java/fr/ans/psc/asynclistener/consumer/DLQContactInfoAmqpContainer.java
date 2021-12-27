@@ -1,3 +1,6 @@
+/*
+ * Copyright A.N.S 2021
+ */
 package fr.ans.psc.asynclistener.consumer;
 
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.EXCHANGE_MESSAGES;
@@ -12,17 +15,33 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.extern.slf4j.Slf4j;
 
 
+/**
+ * The Class DLQContactInfoAmqpContainer.
+ */
 @Slf4j
 public class DLQContactInfoAmqpContainer {
 
+	/** The Constant HEADER_X_RETRIES_COUNT. */
 	public static final String HEADER_X_RETRIES_COUNT = "x-retries-count";
     private final RabbitTemplate rabbitTemplate;
+    
+    /** The Constant MAX_RETRIES_COUNT. */
     public static final int MAX_RETRIES_COUNT = 2;
 
+    /**
+     * Instantiates a new DLQ contact info amqp container.
+     *
+     * @param rabbitTemplate the rabbit template
+     */
     public DLQContactInfoAmqpContainer(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 
+    /**
+     * Process failed messages retry headers.
+     *
+     * @param failedMessage the failed message
+     */
     @RabbitListener(queues = QUEUE_MESSAGES_DLQ)
     public void processFailedMessagesRetryHeaders(Message failedMessage) {
         Integer retriesCnt = (Integer) failedMessage.getMessageProperties().getHeaders().get(HEADER_X_RETRIES_COUNT);
