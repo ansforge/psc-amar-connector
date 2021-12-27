@@ -1,8 +1,8 @@
 FROM maven:3-jdk-11 AS build
 COPY settings-docker.xml /usr/share/maven/ref/
-COPY async-listener /usr/src/app/src
-COPY in-user-api /usr/src/app/src
-COPY psc-api /usr/src/app/src
+COPY async-listener /usr/src/app/async-listener
+COPY in-user-api /usr/src/app/in-user-api
+COPY psc-api /usr/src/app/psc-api
 COPY pom.xml /usr/src/app
 RUN mvn -f /usr/src/app/pom.xml -gs /usr/share/maven/ref/settings-docker.xml -DskipTests clean package
 
