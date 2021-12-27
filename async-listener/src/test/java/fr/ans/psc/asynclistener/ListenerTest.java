@@ -66,7 +66,7 @@ class ListenerTest {
 		contactInfos.setPhone("1234567890");
 		Gson json = new Gson();
 		producer.sendContactMessage(json.toJson(contactInfos));
-		Thread.sleep(5000L);
+		Thread.sleep(50000L);
 		ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS);
 
 	}
