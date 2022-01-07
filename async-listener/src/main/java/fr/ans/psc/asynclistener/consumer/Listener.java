@@ -5,6 +5,7 @@ package fr.ans.psc.asynclistener.consumer;
 
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES;
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PS_MESSAGES;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -15,6 +16,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.google.gson.Gson;
+import java.nio.charset.StandardCharsets;
 
 import fr.ans.in.user.api.UserApi;
 import fr.ans.in.user.model.ContactInfos;
@@ -25,6 +27,9 @@ import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import fr.ans.psc.asynclistener.model.PsAndStructure;
 import fr.ans.psc.model.Ps;
 import lombok.extern.slf4j.Slf4j;
+
+import java.net.URLEncoder;
+
 /**
  * The Class Listener.
  */
@@ -92,12 +97,13 @@ public class Listener {
 		PsAndStructure wrapper = json.fromJson(messageBody, PsAndStructure.class);
 		try {
 			psapi.createNewPs(wrapper.getPs());
-			if (null != structureapi.getStructureById(wrapper.getStructure().getStructureTechnicalId())) {
+			String structureId = URLEncoder.encode(wrapper.getStructure().getStructureTechnicalId(), StandardCharsets.UTF_8);
+			if (null != structureapi.getStructureById(structureId)) {
 				structureapi.updateStructure(wrapper.getStructure());
 			} else {
 				structureapi.createNewStructure(wrapper.getStructure());
 			}
-		}catch (RestClientException e) {
+		} catch (RestClientException e) {
 			log.error("PS {} not updated in DB.", wrapper.getPs().getNationalId());
 			log.error("Error : ", e);
 		}
@@ -116,14 +122,15 @@ public class Listener {
 		String messageBody = new String(message.getBody());
 		ContactInfosWithNationalId contactInput = json.fromJson(messageBody, ContactInfosWithNationalId.class);
 		// Get the PS to update
-		Ps ps = psapi.getPsById(contactInput.getNationalId());
+		String psId = URLEncoder.encode(contactInput.getNationalId(), UTF_8);
+		Ps ps = psapi.getPsById(psId);
 		ps.setEmail(contactInput.getEmail());
 		ps.setPhone(contactInput.getPhone());
 		// Update PS in DB
 		try {
 			psapi.updatePs(ps);
 			log.info("Contact informations sent to API : {}", messageBody);
-		}catch (RestClientResponseException e) {
+		} catch (RestClientResponseException e) {
 			log.error("Contact infos of PS {} not updated in DB (Not requeued) return code : {} ; content : {}", ps.getNationalId(), e.getRawStatusCode(), messageBody);
 			//Exit because we don't want to desynchronize PSC DB and IN data
 			return;
@@ -139,7 +146,7 @@ public class Listener {
 			contactOutput.setPhone(contactInput.getPhone());
 			userApi.putUsersContactInfos(contactInput.getNationalId(), contactOutput);
 			log.info("Contact informations sent to IN : {}", messageBody);
-		}catch (RestClientResponseException e) {
+		} catch (RestClientResponseException e) {
 			log.error("PS {} not updated at IN : return code {}.", ps.getNationalId(), e.getRawStatusCode());
 		} catch (RestClientException e) {
 			log.error("PS {} not updated at IN (It is requeued).", ps.getNationalId(), e);
