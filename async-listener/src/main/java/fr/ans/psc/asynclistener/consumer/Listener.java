@@ -144,7 +144,8 @@ public class Listener {
 			ContactInfos contactOutput = new ContactInfos();
 			contactOutput.setEmail(contactInput.getEmail());
 			contactOutput.setPhone(contactInput.getPhone());
-			userApi.putUsersContactInfos(contactInput.getNationalId(), contactOutput);
+			String encodedNationalId = URLEncoder.encode(contactInput.getNationalId(), UTF_8);
+			userApi.putUsersContactInfos(encodedNationalId, contactOutput);
 			log.info("Contact informations sent to IN : {}", messageBody);
 		} catch (RestClientResponseException e) {
 			log.error("PS {} not updated at IN : return code {}.", ps.getNationalId(), e.getRawStatusCode());
