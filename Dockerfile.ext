@@ -3,7 +3,7 @@ COPY async-listener /usr/src/app/async-listener
 COPY in-user-api /usr/src/app/in-user-api
 COPY psc-api /usr/src/app/psc-api
 COPY pom.xml /usr/src/app
-RUN mvn -f /usr/src/app/pom.xml clean package
+RUN mvn -f /usr/src/app/pom.xml -DskipTests clean package
 
 FROM openjdk:11-slim-buster
 RUN apt update
