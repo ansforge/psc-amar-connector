@@ -6,6 +6,11 @@ job "async-listener" {
     policies = ["psc-ecosystem"]
     change_mode = "restart"
   }
+  
+  affinity {
+    attribute = "$\u007Bnode.class\u007D"
+    value = "standard"
+  }
 
   group "async-listener-services" {
     count = "1"
