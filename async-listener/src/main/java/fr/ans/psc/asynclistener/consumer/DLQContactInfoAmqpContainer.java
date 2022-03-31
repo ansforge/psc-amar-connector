@@ -5,7 +5,6 @@ package fr.ans.psc.asynclistener.consumer;
 
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.EXCHANGE_MESSAGES;
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_MESSAGES_DLQ;
-import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PARKING_LOT;
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.EXCHANGE_PARKING_LOT;
 
 import org.springframework.amqp.core.Message;

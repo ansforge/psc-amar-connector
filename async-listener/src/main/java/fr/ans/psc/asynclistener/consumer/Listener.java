@@ -7,6 +7,9 @@ import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_CONTACT
 import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PS_MESSAGES;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import fr.ans.psc.ApiClient;
+import fr.ans.psc.api.PsApi;
+import fr.ans.psc.model.Ps;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -16,16 +19,10 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
 import com.google.gson.Gson;
-import java.nio.charset.StandardCharsets;
 
 import fr.ans.in.user.api.UserApi;
 import fr.ans.in.user.model.ContactInfos;
-import fr.ans.psc.ApiClient;
-import fr.ans.psc.api.PsApi;
-import fr.ans.psc.api.StructureApi;
 import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
-import fr.ans.psc.asynclistener.model.PsAndStructure;
-import fr.ans.psc.model.Ps;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
@@ -45,8 +42,6 @@ public class Listener {
 	private final fr.ans.in.user.ApiClient inClient;
 	
 	private PsApi psapi;
-	
-	private StructureApi structureapi;
 	
 	private UserApi userApi;
 
@@ -70,7 +65,6 @@ public class Listener {
 
 	private void init() {
 		psapi = new PsApi(client);
-		structureapi = new StructureApi(client);
 		userApi = new UserApi(inClient);
 	}
 
@@ -94,17 +88,11 @@ public class Listener {
     @RabbitListener(queues = QUEUE_PS_MESSAGES)
 	public void receivePsMessage(Message message) throws PscUpdateException {
 		String messageBody = new String(message.getBody());
-		PsAndStructure wrapper = json.fromJson(messageBody, PsAndStructure.class);
+		Ps ps = json.fromJson(messageBody, Ps.class);
 		try {
-			psapi.createNewPs(wrapper.getPs());
-			String structureId = URLEncoder.encode(wrapper.getStructure().getStructureTechnicalId(), StandardCharsets.UTF_8);
-			if (null != structureapi.getStructureById(structureId)) {
-				structureapi.updateStructure(wrapper.getStructure());
-			} else {
-				structureapi.createNewStructure(wrapper.getStructure());
-			}
+			psapi.createNewPs(ps);
 		} catch (RestClientException e) {
-			log.error("PS {} not updated in DB.", wrapper.getPs().getNationalId());
+			log.error("PS {} not updated in DB.", ps.getNationalId());
 			log.error("Error : ", e);
 		}
 	}

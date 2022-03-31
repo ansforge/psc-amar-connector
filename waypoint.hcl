@@ -28,7 +28,7 @@ app "prosanteconnect/async-listener" {
         image = "${var.registry_path}/async-listener"
         tag   = gitrefpretty()
         username = var.registry_username
-        password = var.registry_password
+        password = var.registry_passwordr
       }
     }
   }
