@@ -14,9 +14,9 @@
 		<developerConnection>https://github.com/prosanteconnect/async-listener</developerConnection>
 		<url>https://github.com/prosanteconnect/async-listener</url>
 	</scm>
-	<prerequisites>
-		<maven>2.2.0</maven>
-	</prerequisites>
+<!--	<prerequisites>-->
+<!--		<maven>2.2.0</maven>-->
+<!--	</prerequisites>-->
 
 	<licenses>
 		<license>
@@ -135,6 +135,27 @@
 						<goals>
 							<goal>jar-no-fork</goal>
 						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-enforcer-plugin</artifactId>
+				<version>3.0.0</version>
+				<executions>
+					<execution>
+						<id>enforce-maven</id>
+						<goals>
+							<goal>enforce</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<requireMavenVersion>
+									<version>3.0</version>
+								</requireMavenVersion>
+							</rules>
+						</configuration>
 					</execution>
 				</executions>
 			</plugin>

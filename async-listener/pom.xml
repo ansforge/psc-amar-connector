@@ -22,6 +22,16 @@
 			<version>2.0.0</version>
 		</dependency>
 		<dependency>
+			<groupId>fr.ans.psc</groupId>
+			<artifactId>psc-rabbitmq-conf</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>fr.ans.psc</groupId>
+			<artifactId>amar-api-client</artifactId>
+			<version>1.0-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>fr.ans.in.user</groupId>
 			<artifactId>in-user-api</artifactId>
 			<version>1.0.0</version>
@@ -82,6 +92,14 @@
 		<repository>
 			<id>psc-api-client-mvn-repo</id>
 			<url>https://github.com/prosanteconnect/psc-api-client/raw/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>psc-amar-api-client-mvn-repo</id>
+			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/amar-mvn-repo/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>

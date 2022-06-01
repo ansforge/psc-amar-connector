@@ -22,6 +22,9 @@ public class ApiClientConfig {
 	@Value("${psc.api.url:http://localhost/api}")
 	private String pscApiUrl;
 
+	@Value("{in.amar.url:http://localhost/api/lura/ing/rass}")
+	private String amarApiUrl;
+
 	/**
 	 * Apiclient.
 	 *
@@ -46,5 +49,12 @@ public class ApiClientConfig {
 		client.setBasePath(inApiUrl);
 		return client;
 
+	}
+
+	@Bean
+	public fr.ans.psc.amar.ApiClient amarApiClient() {
+		fr.ans.psc.amar.ApiClient client = new fr.ans.psc.amar.ApiClient();
+		client.setBasePath(amarApiUrl);
+		return client;
 	}
 }

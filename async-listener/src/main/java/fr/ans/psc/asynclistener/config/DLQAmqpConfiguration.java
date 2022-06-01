@@ -17,28 +17,28 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 public class DLQAmqpConfiguration {
-    
+
     /** The Constant QUEUE_CONTACT_MESSAGES. */
     public static final String QUEUE_CONTACT_MESSAGES = "contact-queue";
-    
+
     /** The Constant QUEUE_PS_MESSAGES. */
     public static final String QUEUE_PS_MESSAGES = "ps-queue";
-    
+
     /** The Constant DLX_EXCHANGE_MESSAGES. */
     public static final String DLX_EXCHANGE_MESSAGES = QUEUE_CONTACT_MESSAGES + ".dlx";
-    
+
     /** The Constant QUEUE_MESSAGES_DLQ. */
     public static final String QUEUE_MESSAGES_DLQ = QUEUE_CONTACT_MESSAGES + ".dlq";
-    
+
     /** The Constant EXCHANGE_MESSAGES. */
     public static final String EXCHANGE_MESSAGES = "contact-messages-exchange";
-    
+
     /** The Constant ROUTING_KEY_MESSAGES_QUEUE. */
     public static final String ROUTING_KEY_MESSAGES_QUEUE = "ROUTING_KEY_CONTACT_MESSAGES_QUEUE";
-    
+
     /** The Constant QUEUE_PARKING_LOT. */
     public static final String QUEUE_PARKING_LOT = QUEUE_CONTACT_MESSAGES + ".parking-lot";
-    
+
     /** The Constant EXCHANGE_PARKING_LOT. */
     public static final String EXCHANGE_PARKING_LOT = QUEUE_CONTACT_MESSAGES + "exchange.parking-lot";
 
@@ -64,7 +64,7 @@ public class DLQAmqpConfiguration {
     DirectExchange messagesExchange() {
         return new DirectExchange(EXCHANGE_MESSAGES);
     }
-    
+
     /**
      * Binding messages.
      *
@@ -74,7 +74,7 @@ public class DLQAmqpConfiguration {
     Binding bindingMessages() {
         return BindingBuilder.bind(contactMessagesQueue()).to(messagesExchange()).with(ROUTING_KEY_MESSAGES_QUEUE);
     }
-    
+
     /**
      * Dead letter exchange.
      *
@@ -84,7 +84,7 @@ public class DLQAmqpConfiguration {
     FanoutExchange deadLetterExchange() {
         return new FanoutExchange(DLX_EXCHANGE_MESSAGES);
     }
-     
+
     /**
      * Dead letter queue.
      *
@@ -94,7 +94,7 @@ public class DLQAmqpConfiguration {
     Queue deadLetterQueue() {
         return QueueBuilder.durable(QUEUE_MESSAGES_DLQ).build();
     }
-     
+
     /**
      * Dead letter binding.
      *
@@ -114,7 +114,7 @@ public class DLQAmqpConfiguration {
     FanoutExchange parkingLotExchange() {
         return new FanoutExchange(EXCHANGE_PARKING_LOT);
     }
-     
+
     /**
      * Parking lot queue.
      *
@@ -124,7 +124,7 @@ public class DLQAmqpConfiguration {
     Queue parkingLotQueue() {
         return QueueBuilder.durable(QUEUE_PARKING_LOT).build();
     }
-     
+
     /**
      * Parking lot binding.
      *
