@@ -12,14 +12,17 @@ public class AmarCivilStatusAdapter extends CivilStatus {
 
     public AmarCivilStatusAdapter(Ps ps) {
         setLastName(ps.getLastName());
-        String[] amarFirstNamesArray = ps.getFirstName().split("/");
-        List<String> amarFirstNames = Arrays.stream(amarFirstNamesArray).collect(Collectors.toList());
-        setFirstNames(amarFirstNames);
+        setFirstNames(extractNames(ps.getFirstName()));
         setBirthdate(ps.getDateOfBirth());
         setBirthplace(ps.getBirthAddress());
         setBirthCountryCode(ps.getBirthCountryCode());
         setBirthTownCode(ps.getBirthAddressCode());
         setGenderCode(ps.getGenderCode());
         setPersonalCivilityTitle(ps.getSalutationCode());
+    }
+
+    private List<String> extractNames(String names) {
+        String[] amarFirstNamesArray = names.split("'");
+        return Arrays.stream(amarFirstNamesArray).collect(Collectors.toList());
     }
 }

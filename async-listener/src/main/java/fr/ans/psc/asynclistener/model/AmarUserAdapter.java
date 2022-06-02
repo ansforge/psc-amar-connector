@@ -6,7 +6,7 @@ import fr.ans.psc.model.Ps;
 import java.util.ArrayList;
 import java.util.List;
 
-public class AmarUserAdapter extends fr.ans.psc.amar.model.User {
+public class AmarUserAdapter extends User {
 
     public AmarUserAdapter(Ps ps) {
         ContactInfo contactInfo = new AmarContactInfoAdapter(ps);

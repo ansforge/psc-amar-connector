@@ -12,11 +12,14 @@ import fr.ans.psc.amar.model.User;
 import fr.ans.psc.api.PsApi;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.model.Ps;
+import fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -28,6 +31,7 @@ import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_CREATE_MESSAGES;
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_UPDATE_MESSAGES;
@@ -40,48 +44,52 @@ import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_DELETE_
 @Configuration
 @Slf4j
 public class Listener {
-	
-	private final RabbitTemplate rabbitTemplate;
 
-	private final ApiClient client;
-	
-	private final fr.ans.in.user.ApiClient inClient;
+    private final RabbitTemplate rabbitTemplate;
 
-	private final fr.ans.psc.amar.ApiClient amarClient;
-	
-	private PsApi psapi;
-	
-	private UserApi userApi;
+    private final ApiClient client;
 
-	private fr.ans.psc.amar.api.UserApi amarUserApi;
+    private final fr.ans.in.user.ApiClient inClient;
+
+    private final fr.ans.psc.amar.ApiClient amarClient;
+
+    private PsApi psapi;
+
+    private UserApi userApi;
+
+    private fr.ans.psc.amar.api.UserApi amarUserApi;
+
+    @Value("${amar.production.ready:false}")
+    private boolean isProduction;
 
 
+    /**
+     * The json.
+     */
+    Gson json = new Gson();
 
-	/** The json. */
-	Gson json = new Gson();
+    /**
+     * Instantiates a new receiver.
+     *
+     * @param client         the client
+     * @param inClient       the in client
+     * @param rabbitTemplate the rabbit template
+     */
+    public Listener(ApiClient client, fr.ans.in.user.ApiClient inClient,
+                    fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
+        super();
+        this.rabbitTemplate = rabbitTemplate;
+        this.client = client;
+        this.inClient = inClient;
+        this.amarClient = amarClient;
+        init();
+    }
 
-	/**
-	 * Instantiates a new receiver.
-	 *
-	 * @param client the client
-	 * @param inClient the in client
-	 * @param rabbitTemplate the rabbit template
-	 */
-	public Listener(ApiClient client, fr.ans.in.user.ApiClient inClient,
-					fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
-		super();
-		this.rabbitTemplate = rabbitTemplate;
-		this.client = client;
-		this.inClient = inClient;
-		this.amarClient = amarClient;
-		init();
-	}
-
-	private void init() {
-		psapi = new PsApi(client);
-		userApi = new UserApi(inClient);
-		amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
-	}
+    private void init() {
+        psapi = new PsApi(client);
+        userApi = new UserApi(inClient);
+        amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
+    }
 
 //    /**
 //     * Dlq amqp container.
@@ -112,47 +120,67 @@ public class Listener {
 //		}
 //	}
 
-	// TODO PsCreate
-	@RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)
-	public void receivePsCreateAMARMessage(Message message) {
-    	// get last stored Ps in API
-		String messageBody = new String(message.getBody());
-		Ps queuedPs = json.fromJson(messageBody, Ps.class);
-		try {
-			Ps storedPs = psapi.getPsById(queuedPs.getNationalId());
-			// map Ps with AMAR model
-			// call amar client : post /put
-			amarUserApi.createUser(new AmarUserAdapter(storedPs));
-			log.debug("PS {} successfully stored in AMAR", queuedPs.getNationalId());
-		} catch (RestClientException e) {
-			log.error("PS {} not stored in AMAR", queuedPs.getNationalId());
-		}
-	}
+    // TODO PsCreate, PsUpdate : same method cause we use
+    @RabbitListener(queues = {QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES})
+    public void receivePsCreateAMARMessage(Message message) {
+        // get last stored Ps in API
+        String messageBody = new String(message.getBody());
+        Ps queuedPs = json.fromJson(messageBody, Ps.class);
+        Ps storedPs = null;
+        try {
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
+        } catch (RestClientResponseException e) {
+            log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+            return;
 
-	// TODO PsUpdate
-	@RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
-	public void receivePsUpdateAMARMessage(Message message) {
-		// get last stored Ps in API
+        }
 
-		// map Ps with AMAR model
+        // AMAR call
+        try {
+            // map Ps with AMAR model
+            AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
+            // call amar client : post /put
+            if (isProduction) {
+                // we should use the PUT method because we want the job done without checking
+                amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
+                if (message.getMessageProperties().getReceivedRoutingKey().equals(
+                        PscRabbitMqConfiguration.PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY)) {
+                    log.info("toto");
+                }
+                log.debug("PS {} successfully stored in AMAR", queuedPs.getNationalId());
+            } else {
+                log.debug("PS {} successfully mapped", json.toJson(amarUser, User.class));
+            }
 
-		// call amar client : put
+        } catch (RestClientException e) {
+            log.error("PS {} not stored in AMAR", queuedPs.getNationalId());
+        }
+    }
 
-		// log result
-	}
+    // TODO PsUpdate
+    @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
+    public void receivePsUpdateAMARMessage(Message message) {
+        // get last stored Ps in API
 
-	// TODO PsDelete
-	@RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
-	public void receivePsDeleteAMARMessage(Message message) {
-		// get last stored Ps in API
+        // map Ps with AMAR model
 
-		// map Ps with AMAR model
+        // call amar client : put
 
-		// call amar client : delete if absent
+        // log result
+    }
 
-		// log result
-	}
-    
+    // TODO PsDelete
+    @RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
+    public void receivePsDeleteAMARMessage(Message message) {
+        // get last stored Ps in API
+
+        // map Ps with AMAR model
+
+        // call amar client : delete if absent
+
+        // log result
+    }
+
 //	/**
 //	 * process message : Update mail and phone number in database ans push modification to IN Api.
 //	 *
@@ -198,5 +226,5 @@ public class Listener {
 //				throw new PscUpdateException(e);
 //		}
 //	}
-	
+
 }
