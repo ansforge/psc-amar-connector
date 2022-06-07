@@ -14,7 +14,11 @@ public class AmarUserAdapter extends User {
         List<Practice> practices = new ArrayList<>();
         ps.getProfessions().forEach(profession -> practices.add(new AmarPracticeAdapter(profession)));
         List<AlternativeIdentifier> alternativeIdentifiers = new ArrayList<>();
-        //TODO get otherIds
+        ps.getOtherIds().forEach(otherId ->
+        {
+            AlternativeIdentifier identifier = new AlternativeIdentifier();
+            alternativeIdentifiers.add(identifier.identifier(otherId));
+        });
 
         setNationalId(ps.getNationalId());
         setContactInfo(contactInfo);

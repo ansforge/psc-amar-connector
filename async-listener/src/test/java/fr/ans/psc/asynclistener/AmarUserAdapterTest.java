@@ -33,7 +33,7 @@ public class AmarUserAdapterTest {
                 "\"streetCategoryCode\":\"rue\",\"streetLabel\":\"Zorro\",\"distributionMention\":\"c/o Bernardo\",\"cedexOffice\":\"75117\"," +
                 "\"postalCode\":\"75017\",\"communeCode\":\"75\",\"countryCode\":\"FR\",\"phone\":\"0123456789\",\"phone2\":\"0623456789\"," +
                 "\"fax\":\"0198765432\",\"email\":\"structure@one.fr\",\"departmentCode\":\"99\",\"oldStructureId\":\"101\"," +
-                "\"registrationAuthority\":\"CIA\"}}]}]}", Ps.class);
+                "\"registrationAuthority\":\"CIA\"}}]}],\"otherIds\":[\"800000000001\", \"ALT-ID\"]}", Ps.class);
 
         log.info(json.toJson(ps, Ps.class));
         AmarUserAdapter amarUserAdapter = new AmarUserAdapter(ps);
