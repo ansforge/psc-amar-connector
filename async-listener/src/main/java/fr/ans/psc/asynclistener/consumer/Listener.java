@@ -149,7 +149,7 @@ public class Listener {
                 }
                 log.debug("PS {} successfully stored in AMAR", queuedPs.getNationalId());
             } else {
-                log.debug("PS {} successfully mapped", json.toJson(amarUser, User.class));
+                log.info("PS {} successfully mapped", json.toJson(amarUser, User.class));
             }
 
         } catch (RestClientException e) {
