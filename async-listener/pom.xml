@@ -91,7 +91,7 @@
 	<repositories>
 		<repository>
 			<id>psc-api-client-mvn-repo</id>
-			<url>https://github.com/prosanteconnect/psc-api-client/raw/mvn-repo/</url>
+			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/psc-api-mvn-repo/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
@@ -107,7 +107,7 @@
 		</repository>
 		<repository>
 			<id>psc-rabbitmq-mvn-repo</id>
-			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/mvn-repo/</url>
+			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/rabbitmq-mvn-repo/</url>
 			<snapshots>
 				<enabled>true</enabled>
 				<updatePolicy>always</updatePolicy>
