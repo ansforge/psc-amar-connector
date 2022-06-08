@@ -22,7 +22,7 @@ public class ApiClientConfig {
 	@Value("${psc.api.url:http://localhost/api}")
 	private String pscApiUrl;
 
-	@Value("{in.amar.url:http://localhost/api/lura/ing/rass}")
+	@Value("${in.amar.url:http://localhost/api/lura}")
 	private String amarApiUrl;
 
 	/**

@@ -3,21 +3,15 @@
  */
 package fr.ans.psc.asynclistener.consumer;
 
-//import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_CONTACT_MESSAGES;
-//import static fr.ans.psc.asynclistener.config.DLQAmqpConfiguration.QUEUE_PS_MESSAGES;
-//import static java.nio.charset.StandardCharsets.UTF_8;
-
 import fr.ans.psc.ApiClient;
 import fr.ans.psc.amar.model.User;
 import fr.ans.psc.api.PsApi;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.model.Ps;
-import fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.client.RestClientException;
@@ -25,17 +19,12 @@ import org.springframework.web.client.RestClientResponseException;
 
 import com.google.gson.Gson;
 
-import fr.ans.in.user.api.UserApi;
-import fr.ans.in.user.model.ContactInfos;
-import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_CREATE_MESSAGES;
-import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_UPDATE_MESSAGES;
-import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.QUEUE_PS_DELETE_MESSAGES;
+import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
 
 /**
  * The Class Listener.
@@ -49,13 +38,9 @@ public class Listener {
 
     private final ApiClient client;
 
-    private final fr.ans.in.user.ApiClient inClient;
-
     private final fr.ans.psc.amar.ApiClient amarClient;
 
     private PsApi psapi;
-
-    private UserApi userApi;
 
     private fr.ans.psc.amar.api.UserApi amarUserApi;
 
@@ -72,67 +57,43 @@ public class Listener {
      * Instantiates a new receiver.
      *
      * @param client         the client
-     * @param inClient       the in client
      * @param rabbitTemplate the rabbit template
      */
-    public Listener(ApiClient client, fr.ans.in.user.ApiClient inClient,
-                    fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
+    public Listener(ApiClient client, fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
         super();
         this.rabbitTemplate = rabbitTemplate;
         this.client = client;
-        this.inClient = inClient;
         this.amarClient = amarClient;
         init();
     }
 
     private void init() {
         psapi = new PsApi(client);
-        userApi = new UserApi(inClient);
         amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
     }
 
-//    /**
-//     * Dlq amqp container.
-//     *
-//     * @return the DLQ contact info amqp container
-//     */
-//    @Bean
-//    public DLQContactInfoAmqpContainer dlqAmqpContainer() {
-//        return new DLQContactInfoAmqpContainer(rabbitTemplate);
-//    }
-//
-//    /**
-//     * process message (Update the PS or create it if not exists). Update structure
-//     * as well.
-//     *
-//     * @param message the message
-//     * @throws PscUpdateException the psc update exception
-//     */
-//    @RabbitListener(queues = QUEUE_PS_MESSAGES)
-//	public void receivePsMessage(Message message) throws PscUpdateException {
-//		String messageBody = new String(message.getBody());
-//		Ps ps = json.fromJson(messageBody, Ps.class);
-//		try {
-//			psapi.createNewPs(ps);
-//		} catch (RestClientException e) {
-//			log.error("PS {} not updated in DB.", ps.getNationalId());
-//			log.error("Error : ", e);
-//		}
-//	}
-
-    // TODO PsCreate, PsUpdate : same method cause we use
+    // PsCreate, PsUpdate : same method cause we use PUT method (as specified by AMAR spec)
     @RabbitListener(queues = {QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES})
     public void receivePsCreateAMARMessage(Message message) {
         // get last stored Ps in API
         String messageBody = new String(message.getBody());
         Ps queuedPs = json.fromJson(messageBody, Ps.class);
-        Ps storedPs = null;
+        Ps storedPs;
+
+        // 3 possibilities while getting Ps from sec-psc db :
+        // API sends back a 200 http status code (no RestClientResponseException raised) : we continue to AMAR
+        // API sends back a 410 http status code : no Ps activated in our db, we just exit
+        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
             storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
         } catch (RestClientResponseException e) {
-            log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+            if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
+                log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+            } else {
+                log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
+            }
             return;
-
         }
 
         // AMAR call
@@ -142,89 +103,73 @@ public class Listener {
             // call amar client : post /put
             if (isProduction) {
                 // we should use the PUT method because we want the job done without checking
+                log.info("AMAR base path : {}", amarUserApi.getApiClient().getBasePath());
                 amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
-                if (message.getMessageProperties().getReceivedRoutingKey().equals(
-                        PscRabbitMqConfiguration.PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY)) {
-                    log.info("toto");
-                }
-                log.debug("PS {} successfully stored in AMAR", queuedPs.getNationalId());
+                log.debug("PS {} successfully stored in AMAR, operation was {}",
+                        queuedPs.getNationalId(),
+                        message.getMessageProperties().getReceivedRoutingKey());
             } else {
-                log.info("PS {} successfully mapped", json.toJson(amarUser, User.class));
+                log.info("PS {} successfully mapped in test env", json.toJson(amarUser, User.class));
             }
-
+            // We should never get a 409 http status code, because as AMAR doc states, the update method updates
+            // or stores if the Ps does not exist yet
+            // if it would change in the future, then we would need to add a RestResponseClientException catch clause
+            // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
             log.error("PS {} not stored in AMAR", queuedPs.getNationalId());
+            rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         }
     }
 
-    // TODO PsUpdate
-    @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
-    public void receivePsUpdateAMARMessage(Message message) {
-        // get last stored Ps in API
-
-        // map Ps with AMAR model
-
-        // call amar client : put
-
-        // log result
-    }
-
-    // TODO PsDelete
     @RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
     public void receivePsDeleteAMARMessage(Message message) {
         // get last stored Ps in API
+        String messageBody = new String(message.getBody());
+        Ps queuedPs = json.fromJson(messageBody, Ps.class);
+        Ps storedPs;
 
-        // map Ps with AMAR model
+        // 3 possibilities while getting Ps from sec-psc db :
+        // API sends back a 200 http status code (no RestClientResponseException raised) : Ps still exists, we exit
+        // API sends back a 410 http status code : no Ps activated in our db, we continue to AMAR
+        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
+        try {
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() == HttpStatus.OK.value()) {
+                log.info("Ps {} still exists in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+            } else {
+                log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+            }
+            return;
+        }
 
-        // call amar client : delete if absent
+        // AMAR call
+        try {
+            // map Ps with AMAR model
+            AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
 
-        // log result
+            if (isProduction) {
+                amarUserApi.deleteUser(URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
+                log.debug("PS {} successfully deleted in AMAR",
+                        queuedPs.getNationalId());
+            } else {
+                log.info("PS {} successfully mapped in test env", json.toJson(amarUser, User.class));
+            }
+
+            // call amar client : delete if absent
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                log.info("Ps {} already absent in AMAR", storedPs.getNationalId());
+            } else {
+                // any error in url, headers, etc
+                log.error("PS {} not deleted in AMAR, moved to parking lot", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES,PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+            }
+        } catch (RestClientException e) {
+            // no connection established
+            log.error("PS {} not deleted in AMAR, moved to parking lot", queuedPs.getNationalId());
+            rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+        }
     }
-
-//	/**
-//	 * process message : Update mail and phone number in database ans push modification to IN Api.
-//	 *
-//	 * @param message the message
-//	 * @throws PscUpdateException the psc update exception
-//	 */
-//    @RabbitListener(queues = QUEUE_CONTACT_MESSAGES)
-//	public void receiveContactMessage(Message message) throws PscUpdateException {
-//    	log.info("Receiving message...");
-//		String messageBody = new String(message.getBody());
-//		ContactInfosWithNationalId contactInput = json.fromJson(messageBody, ContactInfosWithNationalId.class);
-//		// Get the PS to update
-//		String psId = URLEncoder.encode(contactInput.getNationalId(), UTF_8);
-//		Ps ps = psapi.getPsById(psId);
-//		ps.setEmail(contactInput.getEmail());
-//		ps.setPhone(contactInput.getPhone());
-//		// Update PS in DB
-//		try {
-//			psapi.updatePs(ps);
-//			log.info("Contact informations sent to API : {}", messageBody);
-//		} catch (RestClientResponseException e) {
-//			log.error("Contact infos of PS {} not updated in DB (Not requeued) return code : {} ; content : {}", ps.getNationalId(), e.getRawStatusCode(), messageBody);
-//			//Exit because we don't want to desynchronize PSC DB and IN data
-//			return;
-//		} catch (Exception e) {
-//			log.error("PS {} not updated in DB (It is requeued).", ps.getNationalId(), e);
-//			// Throw exception to requeue message
-//				throw new PscUpdateException(e);
-//		}
-//
-//		try {
-//			ContactInfos contactOutput = new ContactInfos();
-//			contactOutput.setEmail(contactInput.getEmail());
-//			contactOutput.setPhone(contactInput.getPhone());
-//			String encodedNationalId = URLEncoder.encode(contactInput.getNationalId(), UTF_8);
-//			userApi.putUsersContactInfos(encodedNationalId, contactOutput);
-//			log.info("Contact informations sent to IN : {}", messageBody);
-//		} catch (RestClientResponseException e) {
-//			log.error("PS {} not updated at IN : return code {}.", ps.getNationalId(), e.getRawStatusCode());
-//		} catch (RestClientException e) {
-//			log.error("PS {} not updated at IN (It is requeued).", ps.getNationalId(), e);
-//			// Throw exception to requeue message
-//				throw new PscUpdateException(e);
-//		}
-//	}
-
 }
