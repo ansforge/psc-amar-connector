@@ -80,7 +80,7 @@ class ListenerTest {
 
     @Test
     void testCreatePsOk() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withBodyFile("ps2.json")
                 .withHeader("Content-Type", "application/json")
                 .withStatus(200)));
@@ -101,7 +101,7 @@ class ListenerTest {
 
     @Test
     void testCreatePsFailedBecauseNotExist() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withStatus(410)));
 
@@ -117,7 +117,7 @@ class ListenerTest {
 
     @Test
     void testCreatePsFailedBecauseAmarTimeOut() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBodyFile("ps2.json")
                 .withStatus(200)));
@@ -137,7 +137,7 @@ class ListenerTest {
 
     @Test
     void testDeletePsOk() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withStatus(410)));
 
@@ -157,7 +157,7 @@ class ListenerTest {
 
     @Test
     void testDeletePsFailedStillExists() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withBodyFile("ps2.json")
                 .withStatus(200)));
@@ -174,7 +174,7 @@ class ListenerTest {
 
     @Test
     void testDeletePsFailedStillBecauseOfAmarTimeOut() throws InterruptedException {
-        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withStatus(410)));
 

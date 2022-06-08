@@ -48,6 +48,8 @@ public class Listener {
     @Value("${amar.production.ready:false}")
     private boolean isProduction;
 
+    private final String OTHER_IDS = "otherIds";
+
 
     /**
      * The json.
@@ -86,7 +88,7 @@ public class Listener {
         // API sends back a 410 http status code : no Ps activated in our db, we just exit
         // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
-            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
         } catch (RestClientResponseException e) {
             if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
                 log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
@@ -133,7 +135,7 @@ public class Listener {
         // API sends back a 410 http status code : no Ps activated in our db, we continue to AMAR
         // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
-            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
             if (storedPs != null) {
                 log.info("Ps {} still exists in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
                 return;
