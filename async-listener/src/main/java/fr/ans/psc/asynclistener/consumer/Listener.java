@@ -14,6 +14,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -103,20 +104,19 @@ public class Listener {
             // call amar client : post /put
             if (isProduction) {
                 // we should use the PUT method because we want the job done without checking
-                log.info("AMAR base path : {}", amarUserApi.getApiClient().getBasePath());
                 amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
-                log.debug("PS {} successfully stored in AMAR, operation was {}",
+                log.debug("PS {} successfully stored in AMAR, routing key was {}",
                         queuedPs.getNationalId(),
                         message.getMessageProperties().getReceivedRoutingKey());
             } else {
-                log.info("PS {} successfully mapped in test env", json.toJson(amarUser, User.class));
+                log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
             }
             // We should never get a 409 http status code, because as AMAR doc states, the update method updates
             // or stores if the Ps does not exist yet
             // if it would change in the future, then we would need to add a RestResponseClientException catch clause
             // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
-            log.error("PS {} not stored in AMAR", queuedPs.getNationalId());
+            log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         }
     }
@@ -134,41 +134,40 @@ public class Listener {
         // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
             storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
-        } catch (RestClientResponseException e) {
-            if (e.getRawStatusCode() == HttpStatus.OK.value()) {
+            if (storedPs != null) {
                 log.info("Ps {} still exists in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
-            } else {
-                log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
-                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                return;
             }
-            return;
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() != HttpStatus.GONE.value()) {
+                log.info("API error, Ps {} is pushed to dead letter queue for later treatment", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                return;
+            }
         }
 
         // AMAR call
         try {
-            // map Ps with AMAR model
-            AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
-
             if (isProduction) {
-                amarUserApi.deleteUser(URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
+                amarUserApi.deleteUser(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
                 log.debug("PS {} successfully deleted in AMAR",
                         queuedPs.getNationalId());
             } else {
-                log.info("PS {} successfully mapped in test env", json.toJson(amarUser, User.class));
+                log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
             }
 
             // call amar client : delete if absent
         } catch (RestClientResponseException e) {
             if (e.getRawStatusCode() == HttpStatus.NOT_FOUND.value()) {
-                log.info("Ps {} already absent in AMAR", storedPs.getNationalId());
+                log.info("Ps {} already absent in AMAR", queuedPs.getNationalId());
             } else {
                 // any error in url, headers, etc
-                log.error("PS {} not deleted in AMAR, moved to parking lot", queuedPs.getNationalId());
+                log.warn("PS {} not deleted in AMAR, moved to dead letter queue", queuedPs.getNationalId());
                 rabbitTemplate.send(DLX_EXCHANGE_MESSAGES,PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
             }
         } catch (RestClientException e) {
             // no connection established
-            log.error("PS {} not deleted in AMAR, moved to parking lot", queuedPs.getNationalId());
+            log.warn("PS {} not deleted in AMAR, moved to dead letter queue", queuedPs.getNationalId());
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
         }
     }

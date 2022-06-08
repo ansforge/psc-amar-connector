@@ -6,11 +6,17 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
+import fr.ans.psc.asynclistener.utils.MemoryAppender;
 import fr.ans.psc.model.Ps;
 import fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -27,9 +33,11 @@ import com.google.gson.Gson;
 import fr.ans.psc.asynclistener.consumer.Listener;
 import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
 @ContextConfiguration(classes = PsclAsyncListenerApplication.class)
+@ActiveProfiles("test")
 class ListenerTest {
 
     // TODO this test must be run with a rmq server started on http://localhost:15672
@@ -39,6 +47,8 @@ class ListenerTest {
 
     @Autowired
     MessageProducer producer;
+
+    private MemoryAppender memoryAppender;
 
     /**
      * The http mock server.
@@ -57,32 +67,16 @@ class ListenerTest {
         propertiesRegistry.add("amar.production.ready", () -> true);
     }
 
-//    @Test
-//    void test() throws Exception {
-//        httpMockServer.stubFor(get("/api/ps/1").willReturn(aResponse()
-//                .withBodyFile("ps1.json")
-//                .withHeader("Content-Type", "application/json")
-//                .withStatus(200)));
-//        httpMockServer.stubFor(put("/api/ps").willReturn(aResponse()
-//                .withStatus(200)));
-//        httpMockServer.stubFor(put("/api/lura/ing/rass/users?nationalId=1").willReturn(aResponse()
-//                .withStatus(200)));
-//
-//        ContactInfosWithNationalId contactInfos = new ContactInfosWithNationalId();
-//        contactInfos.setEmail("test@test.org");
-//        contactInfos.setNationalId("1");
-//        contactInfos.setPhone("1234567890");
-//        Gson json = new Gson();
-//        producer.sendContactMessage(json.toJson(contactInfos));
-//        Thread.sleep(50000L);
-//        ForkJoinPool.commonPool().awaitQuiescence(10, TimeUnit.SECONDS);
-//
-//    }
-
-    // test :
-// préparer les stubs API : code psc api : 200 (cas passants), 410 (pas de create AMAR), 404 (pas de delete AMAR)
-//	préparer les stubs AMAR
-//	envoyer les messages dans les différentes queues
+    @BeforeEach
+    public void setup() {
+        // LOG APPENDER
+        Logger logger = (Logger) LoggerFactory.getLogger(Listener.class);
+        memoryAppender = new MemoryAppender();
+        memoryAppender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(memoryAppender);
+        memoryAppender.start();
+    }
 
     @Test
     void testCreatePsOk() throws InterruptedException {
@@ -97,9 +91,12 @@ class ListenerTest {
         Gson gson = new Gson();
         Ps queuedPs = getTestingPs();
         producer.sendPsMessage(PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
-        Thread.sleep(20000L);
+        Thread.sleep(2000);
 
-        //TODO check if amar has been called with amarUser in body
+        assertThat(memoryAppender.contains(
+                "PS 1 successfully stored in AMAR, routing key was PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
     }
 
     @Test
@@ -111,9 +108,11 @@ class ListenerTest {
         Gson gson = new Gson();
         Ps queuedPs = getTestingPs();
         producer.sendPsMessage(PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
-        Thread.sleep(20000L);
+        Thread.sleep(2000L);
 
-        //TODO check if amar has not been called with amarUser in body and message has been sent in dlq
+        assertThat(memoryAppender.contains(
+                "Ps 1 does not exist in sec-psc database, will not be sent to AMAR", Level.INFO))
+                .isTrue();
     }
 
     @Test
@@ -129,17 +128,18 @@ class ListenerTest {
         Gson gson = new Gson();
         Ps queuedPs = getTestingPs();
         producer.sendPsMessage(PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
-        Thread.sleep(20000L);
+        Thread.sleep(2000L);
 
-        //TODO check if amar has not been called with amarUser in body and message has been sent in dlq
+        assertThat(memoryAppender.contains(
+                "PS 1 not stored in AMAR, moved to dead letter queue", Level.WARN))
+                .isTrue();
     }
 
     @Test
     void testDeletePsOk() throws InterruptedException {
         httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
-                .withBodyFile("ps2.json")
                 .withHeader("Content-Type", "application/json")
-                .withStatus(200)));
+                .withStatus(410)));
 
         httpMockServer.stubFor(delete("/api/lura/ing/rass/user?nationalId=1").willReturn(aResponse()
                 .withStatus(200)));
@@ -148,24 +148,47 @@ class ListenerTest {
         Ps queuedPs = getTestingPs();
         AmarUserAdapter amarUser = new AmarUserAdapter(queuedPs);
         producer.sendPsMessage(PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
-        Thread.sleep(20000L);
+        Thread.sleep(2000L);
 
-        //TODO check if amar has been called
+        assertThat(memoryAppender.contains(
+                "PS 1 successfully deleted in AMAR", Level.DEBUG))
+                .isTrue();
     }
 
     @Test
-    void testDeletePsFailed() throws InterruptedException {
+    void testDeletePsFailedStillExists() throws InterruptedException {
+        httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBodyFile("ps2.json")
+                .withStatus(200)));
+
+        Gson gson = new Gson();
+        Ps queuedPs = getTestingPs();
+        producer.sendPsMessage(PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
+        Thread.sleep(2000L);
+
+        assertThat(memoryAppender.contains(
+                "Ps 1 still exists in sec-psc database, will not be sent to AMAR", Level.INFO))
+                .isTrue();
+    }
+
+    @Test
+    void testDeletePsFailedStillBecauseOfAmarTimeOut() throws InterruptedException {
         httpMockServer.stubFor(get("/api/v2/ps/1").willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
                 .withStatus(410)));
 
+        httpMockServer.stubFor(delete("/api/lura/ing/rass/user?nationalId=1").willReturn(aResponse()
+                .withStatus(500)));
+
         Gson gson = new Gson();
         Ps queuedPs = getTestingPs();
-        AmarUserAdapter amarUser = new AmarUserAdapter(queuedPs);
         producer.sendPsMessage(PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
-        Thread.sleep(20000L);
+        Thread.sleep(2000L);
 
-        //TODO check if amar has not been called and message has been sent in dlq
+        assertThat(memoryAppender.contains(
+                "PS 1 not deleted in AMAR, moved to dead letter queue", Level.WARN))
+                .isTrue();
     }
 
     private Ps getTestingPs() {
