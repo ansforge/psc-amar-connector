@@ -78,8 +78,10 @@ public class Listener {
     // PsCreate, PsUpdate : same method cause we use PUT method (as specified by AMAR spec)
     @RabbitListener(queues = {QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES})
     public void receivePsCreateAMARMessage(Message message) {
+        log.info("Starting message consuming");
         // get last stored Ps in API
         String messageBody = new String(message.getBody());
+        log.info("Message body : {}", messageBody);
         Ps queuedPs = json.fromJson(messageBody, Ps.class);
         Ps storedPs;
 
@@ -89,6 +91,9 @@ public class Listener {
         // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
             storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
+            if (storedPs == null) {
+                log.error("Stored Ps not correctly pulled");
+            }
         } catch (RestClientResponseException e) {
             if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
                 log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
@@ -101,6 +106,7 @@ public class Listener {
 
         // AMAR call
         try {
+            log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
             // map Ps with AMAR model
             AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
             // call amar client : post /put
@@ -119,6 +125,10 @@ public class Listener {
             // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
             log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+            rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
+        } catch (Exception e) {
+            log.error("An exception occurred : {}", e.getLocalizedMessage());
+            e.printStackTrace();
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         }
     }
