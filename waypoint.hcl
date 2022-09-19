@@ -1,16 +1,17 @@
-project = "prosanteconnect/async-listener"
+project = "prosanteconnect/${workspace.name}/async-listener"
 
 # Labels can be specified for organizational purposes.
 labels = { "domaine" = "psc" }
 
 runner {
     enabled = true
+    profile = "secpsc-${workspace.name}"
     data_source "git" {
         url = "https://github.com/prosanteconnect/async-listener.git"
-        ref = var.datacenter
+        ref = "${workspace.name}"
     }
     poll {
-        enabled = true
+        enabled = false
     }
 }
 
@@ -39,29 +40,40 @@ app "prosanteconnect/async-listener" {
       jobspec = templatefile("${path.app}/async-listener.nomad.tpl", {
         datacenter = var.datacenter
         registry_path = var.registry_path
+        nomad_namespace = var.nomad_namespace
       })
     }
   }
 }
 
 variable "datacenter" {
-  type    = string
-  default = "dc1"
+  type = string
+  default = ""
+  env = ["NOMAD_DATACENTER"]
+}
+
+variable "nomad_namespace" {
+  type = string
+  default = ""
+  env = ["NOMAD_NAMESPACE"]
 }
 
 variable "registry_username" {
   type    = string
   default = ""
+  env     = ["REGISTRY_USERNAME"]
+  sensitive = true
 }
 
 variable "registry_password" {
   type    = string
   default = ""
+  env     = ["REGISTRY_PASSWORD"]
+  sensitive = true
 }
-
 variable "dockerfile_path" {
   type = string
-  default = "Dockerfile"
+  default = "Dockerfile.ext"
 }
 
 variable "registry_path" {
