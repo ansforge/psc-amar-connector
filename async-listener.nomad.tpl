@@ -49,7 +49,7 @@ job "async-listener" {
 {{ range service "${nomad_namespace}-psc-rabbitmq" }}
 spring.rabbitmq.host={{ .Address }}
 spring.rabbitmq.port={{ .Port }}{{ end }}
-spring.rabbitmq.username={{ with secret "psc-ecosystem/${nomad_namespace}rabbitmq" }}{{ .Data.data.user }}
+spring.rabbitmq.username={{ with secret "psc-ecosystem/${nomad_namespace}/rabbitmq" }}{{ .Data.data.user }}
 spring.rabbitmq.password={{ .Data.data.password }}{{ end }}
 spring.rabbitmq.listener.simple.default-requeue-rejected=false
 in.api.url=toto
