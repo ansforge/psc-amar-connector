@@ -26,7 +26,7 @@ app "prosanteconnect/async-listener" {
     # Uncomment below to use a remote docker registry to push your built images.
     registry {
       use "docker" {
-        image = "${var.registry_path}/async-listener"
+        image = "${var.registry_username}/async-listener"
         tag   = gitrefpretty()
         username = var.registry_username
         password = var.registry_password
