@@ -39,7 +39,7 @@ app "prosanteconnect/async-listener" {
     use "nomad-jobspec" {
       jobspec = templatefile("${path.app}/async-listener.nomad.tpl", {
         datacenter = var.datacenter
-        registry_path = var.registry_path
+        registry_path = var.registry_username
         nomad_namespace = var.nomad_namespace
       })
     }
