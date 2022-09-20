@@ -4,7 +4,6 @@
 package fr.ans.psc.asynclistener.consumer;
 
 import fr.ans.psc.ApiClient;
-import fr.ans.psc.amar.model.User;
 import fr.ans.psc.api.PsApi;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.model.Ps;
@@ -14,7 +13,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
 
@@ -76,8 +74,65 @@ public class Listener {
     }
 
     // PsCreate, PsUpdate : same method cause we use PUT method (as specified by AMAR spec)
-    @RabbitListener(queues = {QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES})
+    @RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)
     public void receivePsCreateAMARMessage(Message message) {
+        log.info("Starting message consuming");
+        // get last stored Ps in API
+        String messageBody = new String(message.getBody());
+        log.info("Message body : {}", messageBody);
+        Ps queuedPs = json.fromJson(messageBody, Ps.class);
+        Ps storedPs;
+
+        // 3 possibilities while getting Ps from sec-psc db :
+        // API sends back a 200 http status code (no RestClientResponseException raised) : we continue to AMAR
+        // API sends back a 410 http status code : no Ps activated in our db, we just exit
+        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
+        try {
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
+            if (storedPs == null) {
+                log.error("Stored Ps not correctly pulled");
+            }
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
+                log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+            } else {
+                log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
+            }
+            return;
+        }
+
+        // AMAR call
+        try {
+            log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
+            // map Ps with AMAR model
+            AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
+            // call amar client : post /put
+            if (isProduction) {
+                // we should use the PUT method because we want the job done without checking
+                amarUserApi.createUser(amarUser);
+                log.debug("PS {} successfully stored in AMAR, routing key was {}",
+                        queuedPs.getNationalId(),
+                        message.getMessageProperties().getReceivedRoutingKey());
+            } else {
+                log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
+            }
+            // We should never get a 409 http status code, because as AMAR doc states, the update method updates
+            // or stores if the Ps does not exist yet
+            // if it would change in the future, then we would need to add a RestResponseClientException catch clause
+            // to check the raw status code and not send message to parking lot if 409
+        } catch (RestClientException e) {
+            log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+            rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
+        } catch (Exception e) {
+            log.error("An exception occurred : {}", e.getLocalizedMessage());
+            e.printStackTrace();
+            rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
+        }
+    }
+
+    @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
+    public void receivePsUpdateAMARMessage(Message message) {
         log.info("Starting message consuming");
         // get last stored Ps in API
         String messageBody = new String(message.getBody());

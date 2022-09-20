@@ -193,8 +193,9 @@ class ListenerTest {
 
     private Ps getTestingPs() {
         Gson gson = new Gson();
-        String psJson = "{\"idType\":\"8\",\"id\":\"00000000001\"," +
-                "\"nationalId\":\"1\",\"lastName\":\"DUPONT\",\"firstName\":\"JIMMY'MIKE'ERICK-RIEGEL\",\"dateOfBirth\":\"17/12/1983\"," +
+        String psJson = "{\"idType\":\"8\",\"id\":\"00000000001\",\"nationalId\":\"1\",\"lastName\":\"DUPONT\"," +
+                "\"firstNames\":[{\"firstName\":\"JIMMY\",\"order\":\"0\"},{\"firstName\":\"MIKE\",\"order\":\"1\"}," +
+                "{\"firstName\":\"ERICK-RIEGEL\",\"order\":\"1\"}],\"dateOfBirth\":\"17/12/1983\"," +
                 "\"birthAddressCode\":\"57463\",\"birthCountryCode\":\"99000\",\"birthAddress\":\"METZ\",\"genderCode\":\"M\"," +
                 "\"phone\":\"0601020304\",\"email\":\"toto57@hotmail.fr\",\"salutationCode\":\"MME\",\"professions\":[{\"exProId\":\"50C\"," +
                 "\"code\":\"50\",\"categoryCode\":\"C\",\"salutationCode\":\"M\",\"lastName\":\"DUPONT\",\"firstName\":\"JIMMY\"," +
@@ -207,7 +208,7 @@ class ListenerTest {
                 "\"streetCategoryCode\":\"rue\",\"streetLabel\":\"Zorro\",\"distributionMention\":\"c/o Bernardo\",\"cedexOffice\":\"75117\"," +
                 "\"postalCode\":\"75017\",\"communeCode\":\"75\",\"countryCode\":\"FR\",\"phone\":\"0123456789\",\"phone2\":\"0623456789\"," +
                 "\"fax\":\"0198765432\",\"email\":\"structure@one.fr\",\"departmentCode\":\"99\",\"oldStructureId\":\"101\"," +
-                "\"registrationAuthority\":\"CIA\"}}]}],\"otherIds\":[\"1\", \"ALT-ID\"]}";
+                "\"registrationAuthority\":\"CIA\"}}]}],\"ids\":[\"1\", \"ALT-ID\"]}";
 
         return gson.fromJson(psJson, Ps.class);
     }

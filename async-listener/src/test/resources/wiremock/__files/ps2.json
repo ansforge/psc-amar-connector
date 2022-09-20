@@ -3,7 +3,20 @@
   "id": "00000000001",
   "nationalId": "1",
   "lastName": "DUPONT",
-  "firstName": "JIMMY'MIKE'ERICK-RIEGEL",
+  "firstNames": [
+    {
+      "firstName": "JIMMY",
+      "order": "0"
+    },
+    {
+      "firstName": "ERICK-RIEGEL",
+      "order": "2"
+    },
+    {
+      "firstName": "MIKE",
+      "order": "1"
+    }
+  ],
   "dateOfBirth": "17/12/1983",
   "birthAddressCode": "57463",
   "birthCountryCode": "99000",
@@ -63,5 +76,5 @@
       ]
     }
   ],
-  "otherIds": ["1", "ALT-ID"]
+  "ids": ["1", "ALT-ID"]
 }

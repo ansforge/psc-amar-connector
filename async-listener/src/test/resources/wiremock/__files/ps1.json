@@ -3,7 +3,20 @@
     "id": "1",
     "nationalId": "1",
     "lastName": "POISSONNIER",
-    "firstName": "CHRISTIAN\"MARCEL\"",
+    "firstNames": [
+        {
+            "firstName": "CHRISTIAN",
+            "order": "0"
+        },
+        {
+            "firstName": "MARCEL",
+            "order": "1"
+        },
+        {
+            "firstName": "",
+            "order": "2"
+        }
+    ],
     "dateOfBirth": "04/11/1973",
     "birthAddressCode": "94017",
     "birthCountryCode": "99000",
@@ -66,5 +79,5 @@
             "exProId": "10C"
         }
     ],
-    "otherIds": ["1"]
+    "ids": ["1"]
 }

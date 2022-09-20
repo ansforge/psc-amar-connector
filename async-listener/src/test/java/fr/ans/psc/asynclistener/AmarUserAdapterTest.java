@@ -20,7 +20,9 @@ public class AmarUserAdapterTest {
 
         Gson json = new Gson();
         Ps ps = json.fromJson("{\"idType\":\"8\",\"id\":\"00000000001\"," +
-                "\"nationalId\":\"800000000001\",\"lastName\":\"DUPONT\",\"firstName\":\"JIMMY'MIKE'ERICK-RIEGEL\",\"dateOfBirth\":\"17/12/1983\"," +
+                "\"nationalId\":\"800000000001\",\"lastName\":\"DUPONT\"," +
+                "\"firstNames\":[{\"firstName\":\"JIMMY\",\"order\":\"0\"},{\"firstName\":\"ERICK-RIEGEL\",\"order\":\"2\"},{\"firstName\":\"MIKE\",\"order\":\"1\"}]," +
+                "\"dateOfBirth\":\"17/12/1983\"," +
                 "\"birthAddressCode\":\"57463\",\"birthCountryCode\":\"99000\",\"birthAddress\":\"METZ\",\"genderCode\":\"M\"," +
                 "\"phone\":\"0601020304\",\"email\":\"toto57@hotmail.fr\",\"salutationCode\":\"MME\",\"professions\":[{\"exProId\":\"50C\"," +
                 "\"code\":\"50\",\"categoryCode\":\"C\",\"salutationCode\":\"M\",\"lastName\":\"DUPONT\",\"firstName\":\"JIMMY\"," +
@@ -33,7 +35,7 @@ public class AmarUserAdapterTest {
                 "\"streetCategoryCode\":\"rue\",\"streetLabel\":\"Zorro\",\"distributionMention\":\"c/o Bernardo\",\"cedexOffice\":\"75117\"," +
                 "\"postalCode\":\"75017\",\"communeCode\":\"75\",\"countryCode\":\"FR\",\"phone\":\"0123456789\",\"phone2\":\"0623456789\"," +
                 "\"fax\":\"0198765432\",\"email\":\"structure@one.fr\",\"departmentCode\":\"99\",\"oldStructureId\":\"101\"," +
-                "\"registrationAuthority\":\"CIA\"}}]}],\"otherIds\":[\"800000000001\", \"ALT-ID\"]}", Ps.class);
+                "\"registrationAuthority\":\"CIA\"}}]}],\"ids\":[\"800000000001\", \"ALT-ID\"]}", Ps.class);
 
         log.info(json.toJson(ps, Ps.class));
         AmarUserAdapter amarUserAdapter = new AmarUserAdapter(ps);
@@ -52,5 +54,8 @@ public class AmarUserAdapterTest {
 
         assertEquals(ps.getProfessions().get(0).getWorkSituations().get(0).getStructure().getStructureTechnicalId(),
                 amarUserAdapter.getPractices().get(0).getActivities().get(0).getCompanyTechnicalIdentifier());
+
+        assertEquals("JIMMY", amarUserAdapter.getCivilStatus().getFirstNames().get(0));
+        assertEquals("ERICK-RIEGEL", amarUserAdapter.getCivilStatus().getFirstNames().get(2));
     }
 }
