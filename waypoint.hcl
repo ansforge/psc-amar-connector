@@ -28,6 +28,8 @@ app "prosanteconnect/async-listener" {
       use "docker" {
         image = "${var.registry_username}/async-listener"
         tag   = gitrefpretty()
+        username = var.registry_username
+        password = var.registry_password
         encoded_auth = filebase64("/secrets/dockerAuth.json")
       }
     }
