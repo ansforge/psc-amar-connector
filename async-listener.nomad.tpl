@@ -1,6 +1,7 @@
 job "async-listener" {
   datacenters = ["${datacenter}"]
   type = "service"
+  namespace = "${nomad_namespace}"
 
   vault {
     policies = ["psc-ecosystem"]
@@ -45,14 +46,14 @@ job "async-listener" {
       }
       template {
         data = <<EOF
-{{ range service "psc-rabbitmq" }}
+{{ range service "${nomad_namespace}-psc-rabbitmq" }}
 spring.rabbitmq.host={{ .Address }}
 spring.rabbitmq.port={{ .Port }}{{ end }}
-spring.rabbitmq.username={{ with secret "psc-ecosystem/rabbitmq" }}{{ .Data.data.user }}
+spring.rabbitmq.username={{ with secret "psc-ecosystem/${nomad_namespace}/rabbitmq" }}{{ .Data.data.user }}
 spring.rabbitmq.password={{ .Data.data.password }}{{ end }}
 spring.rabbitmq.listener.simple.default-requeue-rejected=false
-in.api.url={{ with secret "psc-ecosystem/psc-ws-maj" }}{{ .Data.data.in_rass_url }}{{ end }}
-{{ range service "psc-api-maj-v2" }}psc.api.url=http://{{ .Address }}:{{ .Port }}/psc-api-maj/api{{ end }}
+in.api.url=toto
+{{ range service "${nomad_namespace}-psc-api-maj-v2" }}psc.api.url=http://{{ .Address }}:{{ .Port }}/psc-api-maj/api{{ end }}
 amar.production.ready=false
 EOF
         destination = "secrets/application.properties"
@@ -62,7 +63,7 @@ EOF
         memory = 640
       }
       service {
-        name = "$\u007BNOMAD_JOB_NAME\u007D"
+        name = "$\u007BNOMAD_NAMESPACE\u007D-$\u007BNOMAD_JOB_NAME\u007D"
         port = "http"
         check {
           type = "tcp"
@@ -86,7 +87,7 @@ EOF
       }
       template {
         data = <<EOH
-LOGSTASH_HOST = {{ range service "logstash" }}{{ .Address }}:{{ .Port }}{{ end }}
+LOGSTASH_HOST = {{ range service "${nomad_namespace}-logstash" }}{{ .Address }}:{{ .Port }}{{ end }}
 ENVIRONMENT = "${datacenter}"
 EOH
         destination = "local/file.env"
