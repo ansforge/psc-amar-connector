@@ -73,7 +73,6 @@ public class Listener {
         amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
     }
 
-    // PsCreate, PsUpdate : same method cause we use PUT method (as specified by AMAR spec)
     @RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)
     public void receivePsCreateAMARMessage(Message message) {
         log.info("Starting message consuming");
