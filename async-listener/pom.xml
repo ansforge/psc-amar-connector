@@ -29,7 +29,7 @@
 		<dependency>
 			<groupId>fr.ans.psc</groupId>
 			<artifactId>amar-api-client</artifactId>
-			<version>1.0-SNAPSHOT</version>
+			<version>1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>fr.ans.in.user</groupId>
@@ -97,14 +97,18 @@
 				<updatePolicy>always</updatePolicy>
 			</snapshots>
 		</repository>
-		<repository>
-			<id>psc-amar-api-client-mvn-repo</id>
-			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/amar-mvn-repo/</url>
-			<snapshots>
-				<enabled>true</enabled>
-				<updatePolicy>always</updatePolicy>
-			</snapshots>
-		</repository>
+<!--		<repository>-->
+<!--			<id>psc-amar-api-client-mvn-repo</id>-->
+<!--			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/amar-mvn-repo/</url>-->
+<!--			<snapshots>-->
+<!--				<enabled>true</enabled>-->
+<!--				<updatePolicy>always</updatePolicy>-->
+<!--			</snapshots>-->
+<!--		</repository>-->
+<!--		<repository>-->
+<!--			<id>amar-api-client-1.1.0</id>-->
+<!--			<url>https://maven.pkg.github.com/prosanteconnect/psc-ecosystem-components</url>-->
+<!--		</repository>-->
 		<repository>
 			<id>psc-rabbitmq-mvn-repo</id>
 			<url>https://github.com/prosanteconnect/psc-ecosystem-components/raw/rabbitmq-mvn-repo/</url>
