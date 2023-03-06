@@ -115,6 +115,7 @@ public class Listener {
                         message.getMessageProperties().getReceivedRoutingKey());
             } else {
                 log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
+                log.info("Amar User looked like : {}", amarUser);
             }
             // We should never get a 409 http status code, because as AMAR doc states, the update method updates
             // or stores if the Ps does not exist yet
