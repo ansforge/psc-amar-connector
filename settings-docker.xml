@@ -35,7 +35,7 @@
     <server>
       <id>github</id>
       <username>prosanteconnect</username>
-      <password>${PROSANTECONNECT_PACKAGE_GITHUB_TOKEN}</password>
+      <password>${internal.repo.username}</password>
     </server>
   </servers>
 </settings>
