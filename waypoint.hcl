@@ -76,7 +76,7 @@ variable "registry_password" {
 variable "github_token" {
   type    = string
   default = ""
-  env     = ["GITHUB_TOKEN"]
+  env     = ["PROSANTECONNECT_PACKAGE_GITHUB_TOKEN"]
   sensitive = true
 }
 
