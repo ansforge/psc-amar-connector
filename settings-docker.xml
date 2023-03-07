@@ -34,7 +34,7 @@
   <servers>
     <server>
       <id>github</id>
-      <username>prosanteconnect</username>
+      <username>bou3108</username>
       <password>${internal.repo.username}</password>
     </server>
   </servers>
