@@ -11,4 +11,31 @@
       <url>http://repo.proxy-dev-forge.asip.hst.fluxus.net/artifactory/repo-tnr/</url>
     </mirror>
   </mirrors>
+
+  <profiles>
+    <profile>
+      <id>github</id>
+      <repositories>
+        <repository>
+          <id>central</id>
+          <url>https://repo1.maven.org/maven2</url>
+        </repository>
+        <repository>
+          <id>github</id>
+          <url>https://maven.pkg.github.com/prosanteconnect/psc-ecosystem-components</url>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+
+  <servers>
+    <server>
+      <id>github</id>
+      <username>prosanteconnect</username>
+      <password>${PROSANTECONNECT_PACKAGE_GITHUB_TOKEN}</password>
+    </server>
+  </servers>
 </settings>
