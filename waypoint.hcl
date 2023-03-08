@@ -22,7 +22,7 @@ app "prosanteconnect/async-listener" {
   build {
     use "docker" {
       dockerfile = "${path.app}/${var.dockerfile_path}"
-      build_args = {"PROSANTECONNECT_PACKAGE_GITHUB_TOKEN"="${var.github_token}"}
+      build_args = {"PROSANTECONNECT_PACKAGE_GITHUB_TOKEN"="tutu"}
     }
     # Uncomment below to use a remote docker registry to push your built images.
     registry {
