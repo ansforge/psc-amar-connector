@@ -43,6 +43,7 @@ job "async-listener" {
       config {
         image = "${artifact.image}:${artifact.tag}"
         ports = ["http"]
+        extra_hosts = ["in.api.henix.asipsante.fr:192.168.43.99", "in.api.preprod.henix.asipsante.fr:192.168.43.99"]
       }
       template {
         data = <<EOF
