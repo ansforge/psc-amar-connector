@@ -25,7 +25,7 @@
 
   <servers>
     <server>
-      <id>github</id>
+      <id>github-prosanteconnect</id>
       <username>prosanteconnect</username>
       <password>${internal.repo.username}</password>
     </server>
