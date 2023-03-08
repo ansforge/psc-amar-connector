@@ -55,7 +55,7 @@ spring.rabbitmq.password={{ .Data.data.password }}{{ end }}
 spring.rabbitmq.listener.simple.default-requeue-rejected=false
 in.api.url={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.amar_api_url }}{{ end }}
 {{ range service "${nomad_namespace}-psc-api-maj-v2" }}psc.api.url=http://{{ .Address }}:{{ .Port }}/psc-api-maj/api{{ end }}
-amar.production.ready=false
+amar.production.ready={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.send_to_amar }}{{ end }}
 EOF
         destination = "secrets/application.properties"
       }
