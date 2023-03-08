@@ -17,7 +17,10 @@ public class AmarUserAdapter extends User {
         ps.getIds().forEach(id ->
         {
             AlternativeIdentifier identifier = new AlternativeIdentifier();
-            alternativeIdentifiers.add(identifier.identifier(id));
+            identifier.setIdentifier(id);
+            identifier.setOrigine(id.substring(0,1));
+            identifier.setQuality(1);
+            alternativeIdentifiers.add(identifier);
         });
 
         setNationalId(ps.getNationalId());
