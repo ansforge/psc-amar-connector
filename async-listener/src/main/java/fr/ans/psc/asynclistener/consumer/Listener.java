@@ -122,6 +122,7 @@ public class Listener {
             // if it would change in the future, then we would need to add a RestResponseClientException catch clause
             // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
+            log.error("Could not send PS to AMAR", e);
             log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         } catch (Exception e) {
