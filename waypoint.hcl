@@ -78,8 +78,3 @@ variable "github_token" {
   env     = ["PROSANTECONNECT_PACKAGE_GITHUB_TOKEN"]
   sensitive = true
 }
-
-variable "registry_path" {
-  type = string
-  default = "registry.repo.proxy-dev-forge.asip.hst.fluxus.net/prosanteconnect"
-}
