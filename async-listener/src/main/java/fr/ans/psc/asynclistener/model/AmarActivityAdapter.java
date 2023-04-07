@@ -12,6 +12,7 @@ public class AmarActivityAdapter extends Activity {
         setPharmacistTableSectionCode(workSituation.getPharmacistTableSectionCode());
         setRoleCode(workSituation.getRoleCode());
         setCompanyRegistrationAuthority(workSituation.getRegistrationAuthority());
+        setActivityTypeCode(workSituation.getActivityKindCode());
 
         Structure struct = workSituation.getStructure();
         if (struct != null) {

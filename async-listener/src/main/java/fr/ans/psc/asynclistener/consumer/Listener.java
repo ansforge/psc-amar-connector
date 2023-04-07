@@ -44,7 +44,7 @@ public class Listener {
     private fr.ans.psc.amar.api.UserApi amarUserApi;
 
     @Value("${amar.production.ready:false}")
-    private boolean isProduction;
+    private boolean isSendToAMAR;
 
     private final String OTHER_IDS = "otherIds";
 
@@ -73,7 +73,6 @@ public class Listener {
         amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
     }
 
-    // PsCreate, PsUpdate : same method cause we use PUT method (as specified by AMAR spec)
     @RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)
     public void receivePsCreateAMARMessage(Message message) {
         log.info("Starting message consuming");
@@ -108,14 +107,15 @@ public class Listener {
             // map Ps with AMAR model
             AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
             // call amar client : post /put
-            if (isProduction) {
+            if (isSendToAMAR) {
                 // we should use the PUT method because we want the job done without checking
                 amarUserApi.createUser(amarUser);
                 log.debug("PS {} successfully stored in AMAR, routing key was {}",
                         queuedPs.getNationalId(),
                         message.getMessageProperties().getReceivedRoutingKey());
             } else {
-                log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
+                log.info("PS {} successfully created in test env", queuedPs.getNationalId());
+                log.debug("Amar User looked like : {}", amarUser);
             }
             // We should never get a 409 http status code, because as AMAR doc states, the update method updates
             // or stores if the Ps does not exist yet
@@ -123,10 +123,10 @@ public class Listener {
             // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
             log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+            log.error("AMAR side Exception", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         } catch (Exception e) {
-            log.error("An exception occurred : {}", e.getLocalizedMessage());
-            e.printStackTrace();
+            log.error("An exception occurred", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         }
     }
@@ -165,14 +165,15 @@ public class Listener {
             // map Ps with AMAR model
             AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
             // call amar client : post /put
-            if (isProduction) {
+            if (isSendToAMAR) {
                 // we should use the PUT method because we want the job done without checking
                 amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
                 log.debug("PS {} successfully stored in AMAR, routing key was {}",
                         queuedPs.getNationalId(),
                         message.getMessageProperties().getReceivedRoutingKey());
             } else {
-                log.info("PS {} successfully mapped in test env", queuedPs.getNationalId());
+                log.info("PS {} successfully updated in test env", queuedPs.getNationalId());
+                log.debug("Amar User looked like : {}", amarUser);
             }
             // We should never get a 409 http status code, because as AMAR doc states, the update method updates
             // or stores if the Ps does not exist yet
@@ -180,10 +181,10 @@ public class Listener {
             // to check the raw status code and not send message to parking lot if 409
         } catch (RestClientException e) {
             log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+            log.error("AMAR side Exception was", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         } catch (Exception e) {
-            log.error("An exception occurred : {}", e.getLocalizedMessage());
-            e.printStackTrace();
+            log.error("An exception occurred", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
         }
     }
@@ -215,7 +216,7 @@ public class Listener {
 
         // AMAR call
         try {
-            if (isProduction) {
+            if (isSendToAMAR) {
                 amarUserApi.deleteUser(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
                 log.debug("PS {} successfully deleted in AMAR",
                         queuedPs.getNationalId());
@@ -235,7 +236,10 @@ public class Listener {
         } catch (RestClientException e) {
             // no connection established
             log.warn("PS {} not deleted in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+            log.error("Exception was", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+        } catch (Exception e) {
+            log.error("an Exception occured", e);
         }
     }
 }
