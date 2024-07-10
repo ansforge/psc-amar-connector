@@ -43,7 +43,10 @@
         <module>in-user-api</module>
         <module>async-listener</module>
     </modules>
-
+    <scm>
+        <connection>scm:git:${project.basedir}</connection>
+        <tag>HEAD</tag>
+    </scm>
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
             <plugins>
