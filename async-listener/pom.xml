@@ -26,7 +26,6 @@
 	</parent>
 
 	<artifactId>async-listener</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
 	<name>async-listener</name>
 	<description>psc rabbitmq listener</description>
 
