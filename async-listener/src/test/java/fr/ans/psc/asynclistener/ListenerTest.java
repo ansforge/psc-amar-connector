@@ -100,7 +100,7 @@ class ListenerTest {
                 .withHeader("Content-Type", "application/json")
                 .withStatus(200)));
 
-        httpMockServer.stubFor(put("/api/lura/ing/rass/user?nationalId=1").willReturn(aResponse()
+        httpMockServer.stubFor(post("/api/lura/ing/rass/user").willReturn(aResponse()
                 .withStatus(200)));
 
         Gson gson = new Gson();
