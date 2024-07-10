@@ -40,7 +40,7 @@ public class AmarUserAdapter extends User {
             alternativeIdentifiers.add(identifier);
         });
 
-        setNationalId(ps.getNationalId());
+        setNationalId(AttributeEncoding.encodeStringAttribute(ps.getNationalId()));
         setContactInfo(contactInfo);
         setCivilStatus(civilStatus);
         setPractices(practices);
