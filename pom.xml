@@ -7,7 +7,7 @@
     <artifactId>async-listener-root</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <inceptionYear>2022-2023</inceptionYear>
+    <inceptionYear>2022-2024</inceptionYear>
 
     <name>async-listener-root</name>
 
@@ -73,7 +73,40 @@
                     <artifactId>maven-project-info-reports-plugin</artifactId>
                     <version>3.0.0</version>
                 </plugin>
+                <plugin>
+                  <groupId>com.mycila</groupId>
+                  <artifactId>license-maven-plugin</artifactId>
+                  <version>4.5</version>
+                  <configuration>
+                    <header>com/mycila/maven/plugin/license/templates/APACHE-2.txt</header>
+                    <properties>
+                      <owner>Agence du Numérique en Santé (ANS)</owner>
+                      <email>https://esante.gouv.fr</email>
+                    </properties>
+                    <excludes>
+                      <exclude>LICENSE.txt</exclude>
+                      <exclude>node_modules/**</exclude>
+                      <exclude>dist/**</exclude>
+                      <exclude>.tmp/**</exclude>
+                    </excludes>
+                  </configuration>
+                </plugin>
             </plugins>
         </pluginManagement>
+        <plugins>
+          <plugin>
+            <groupId>com.mycila</groupId>
+            <artifactId>license-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>license-check</id>
+                <goals>
+                  <goal>check</goal>
+                </goals>
+                <phase>initialize</phase>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
     </build>
 </project>
