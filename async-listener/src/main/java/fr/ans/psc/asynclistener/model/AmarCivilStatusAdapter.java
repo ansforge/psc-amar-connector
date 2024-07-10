@@ -19,22 +19,20 @@ import fr.ans.psc.amar.model.CivilStatus;
 import fr.ans.psc.model.FirstName;
 import fr.ans.psc.model.Ps;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class AmarCivilStatusAdapter extends CivilStatus {
 
     public AmarCivilStatusAdapter(Ps ps) {
-        setLastName(ps.getLastName());
+        setLastName(AttributeEncoding.encodeStringAttribute(ps.getLastName()));
         setFirstNames(extractNames(ps.getFirstNames()));
-        setBirthdate(ps.getDateOfBirth());
-        setBirthplace(ps.getBirthAddress());
-        setBirthCountryCode(ps.getBirthCountryCode());
-        setBirthTownCode(ps.getBirthAddressCode());
-        setGenderCode(ps.getGenderCode());
-        setPersonalCivilityTitle(ps.getSalutationCode());
+        setBirthdate(AttributeEncoding.encodeStringAttribute(ps.getDateOfBirth()));
+        setBirthplace(AttributeEncoding.encodeStringAttribute(ps.getBirthAddress()));
+        setBirthCountryCode(AttributeEncoding.encodeStringAttribute(ps.getBirthCountryCode()));
+        setBirthTownCode(AttributeEncoding.encodeStringAttribute(ps.getBirthAddressCode()));
+        setGenderCode(AttributeEncoding.encodeStringAttribute(ps.getGenderCode()));
+        setPersonalCivilityTitle(AttributeEncoding.encodeStringAttribute(ps.getSalutationCode()));
     }
 
     private List<String> extractNames(List<FirstName> firstNames) {

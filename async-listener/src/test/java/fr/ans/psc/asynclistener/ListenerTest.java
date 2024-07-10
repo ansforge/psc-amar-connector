@@ -18,8 +18,6 @@ package fr.ans.psc.asynclistener;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.TimeUnit;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -27,7 +25,6 @@ import ch.qos.logback.classic.LoggerContext;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.asynclistener.utils.MemoryAppender;
 import fr.ans.psc.model.Ps;
-import fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
@@ -40,15 +37,13 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
-import com.github.tomakehurst.wiremock.matching.AnythingPattern;
-import com.github.tomakehurst.wiremock.matching.StringValuePattern;
-import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import com.google.gson.Gson;
 
 import fr.ans.psc.asynclistener.consumer.Listener;
-import fr.ans.psc.asynclistener.model.ContactInfosWithNationalId;
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.boot.test.mock.mockito.MockBean;
 
 @SpringBootTest
 @ContextConfiguration(classes = PsclAsyncListenerApplication.class)
@@ -56,6 +51,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ListenerTest {
 
     // TODO this test must be run with a rmq server started on http://localhost:15672
+    // FIXME ... how is the build supposed to do that ?
 
     @Autowired
     Listener listener;
