@@ -38,6 +38,8 @@ rm release.properties && echo Removed stale release.properties || echo No previo
 find . -type f -name "pom.xml.releaseBackup" -delete -print
 mvn release:prepare -DautoVersionSubmodules=true -DtagNameFormat=@{version}
 VERSION=$(grep scm.tag= release.properties | sed -e "s/scm.tag=//g")
-echo $VERSION
-cat /etc/no_way_this_exists
+git push origin ${VERSION}
+git push
 echo Stopping/wiping rabbitMQ test container.
+sudo docker stop "sec-psc-rabbitmq"
+sudo docker rm "sec-psc-rabbitmq"
