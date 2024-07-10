@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Copyright © 2022-2024 Agence du Numérique en Santé (ANS) (https://esante.gouv.fr)
 #
@@ -14,10 +15,11 @@
 # limitations under the License.
 #
 
-#spring.rabbitmq.host=localhost
-#spring.rabbitmq.port=5672
-#spring.rabbitmq.username=guest
-#spring.rabbitmq.password=guest
-spring.rabbitmq.listener.simple.default-requeue-rejected=false
-api.base.url=http://localhost/
-amar.production.ready=false
+sudo docker run \
+      --detach \
+      --publish ${HOST_ADDRESS}:5672:5672 \
+      --publish ${HOST_ADDRESS}:15672:15672 \
+      --publish ${HOST_ADDRESS}:15692:15692 \
+      --name "sec-psc-rabbitmq" \
+      -e RABBITMQ_DEFAULT_USER=guest -e RABBITMQ_DEFAULT_PASS=guest \
+      rabbitmq:3.8-management

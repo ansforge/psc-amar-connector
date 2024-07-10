@@ -12,20 +12,18 @@ and go back to a previous working distribution if need be.
 
 ### Release procedure
 
-Whenever a version is ready for release, run the following commands on the `main` brnahc (or on the maintenance branch if we're about to issue a production FIX). This should run on any shell, be it `bash`, `cmd` or if needed `gitbash`.
+#### Prerequisites
+
+docker needs to be available in youy release environment. Under windows,  please use a virtual machine like WSL2 or Virtualbox.
+
+#### Procedure
+
+Whenever a version is ready for release, run the following commands on the `main` branch 
+(or on the maintenance branch if we're about to issue a production FIX). This should run on any shell, be it `bash`, `cmd` or if needed `gitbash`.
 
 ```bash
-mvn release:prepare -DautoVersionSubmodules=true -DtagNameFormat=@{version}
-git push
-git push origin <new_version_tag>
+src/main/scripts/release.sh
 ```
 
-where `<new_version_tag>` stands for the new version.
-
-Eg to relase `1.0.0` :
-
-```bash
-mvn release:prepare -DautoVersionSubmodules=true -DtagNameFormat=@{version}
-git push
-git push origin 1.0.0
-```
+This command manages the rabbitMQ test container to ensure that tests are run before releasing, creates the release tags (your input will be asked to chose the release version
+and the next development version) and pushes the commits & tag to the git repository.
