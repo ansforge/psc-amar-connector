@@ -41,15 +41,6 @@
 	<version>1.0.1-SNAPSHOT</version>
 	<url>https://github.com/swagger-api/swagger-codegen</url>
 	<description>Client in user api (spring RestTemplate)</description>
-	<scm>
-		<connection>https://github.com/prosanteconnect/async-listener</connection>
-		<developerConnection>https://github.com/prosanteconnect/async-listener</developerConnection>
-		<url>https://github.com/prosanteconnect/async-listener</url>
-	</scm>
-<!--	<prerequisites>-->
-<!--		<maven>2.2.0</maven>-->
-<!--	</prerequisites>-->
-
 	<licenses>
 		<license>
 			<name>Unlicense</name>
