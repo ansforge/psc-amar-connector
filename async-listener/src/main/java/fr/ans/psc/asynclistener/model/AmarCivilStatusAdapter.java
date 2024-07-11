@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2022-2023 Agence du Numérique en Santé (ANS) (https://esante.gouv.fr)
+/*
+ * Copyright © 2022-2024 Agence du Numérique en Santé (ANS) (https://esante.gouv.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,22 +19,20 @@ import fr.ans.psc.amar.model.CivilStatus;
 import fr.ans.psc.model.FirstName;
 import fr.ans.psc.model.Ps;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class AmarCivilStatusAdapter extends CivilStatus {
 
     public AmarCivilStatusAdapter(Ps ps) {
-        setLastName(ps.getLastName());
+        setLastName(AttributeEncoding.encodeStringAttribute(ps.getLastName()));
         setFirstNames(extractNames(ps.getFirstNames()));
-        setBirthdate(ps.getDateOfBirth());
-        setBirthplace(ps.getBirthAddress());
-        setBirthCountryCode(ps.getBirthCountryCode());
-        setBirthTownCode(ps.getBirthAddressCode());
-        setGenderCode(ps.getGenderCode());
-        setPersonalCivilityTitle(ps.getSalutationCode());
+        setBirthdate(AttributeEncoding.encodeStringAttribute(ps.getDateOfBirth()));
+        setBirthplace(AttributeEncoding.encodeStringAttribute(ps.getBirthAddress()));
+        setBirthCountryCode(AttributeEncoding.encodeStringAttribute(ps.getBirthCountryCode()));
+        setBirthTownCode(AttributeEncoding.encodeStringAttribute(ps.getBirthAddressCode()));
+        setGenderCode(AttributeEncoding.encodeStringAttribute(ps.getGenderCode()));
+        setPersonalCivilityTitle(AttributeEncoding.encodeStringAttribute(ps.getSalutationCode()));
     }
 
     private List<String> extractNames(List<FirstName> firstNames) {
