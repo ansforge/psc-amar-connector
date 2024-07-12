@@ -20,6 +20,7 @@ import fr.ans.psc.amar.model.User;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.model.Ps;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -72,5 +73,34 @@ public class AmarUserAdapterTest {
 
         assertEquals("JIMMY", amarUserAdapter.getCivilStatus().getFirstNames().get(0));
         assertEquals("ERICK-RIEGEL", amarUserAdapter.getCivilStatus().getFirstNames().get(2));
+    }
+    
+    @Test
+    void shouldRemoveEmptyFirstNames(){
+      Gson json = new Gson();
+        Ps ps = json.fromJson("{\"idType\":\"8\",\"id\":\"00000000001\"," +
+                "\"nationalId\":\"800000000001\",\"lastName\":\"DUPONT\"," +
+                "\"firstNames\":[{\"firstName\":\"\",\"order\":\"0\"},{\"firstName\":\"ERICK-RIEGEL\",\"order\":\"2\"},{\"firstName\":\"MIKE\",\"order\":\"1\"}]," +
+                "\"dateOfBirth\":\"17/12/1983\"," +
+                "\"birthAddressCode\":\"57463\",\"birthCountryCode\":\"99000\",\"birthAddress\":\"METZ\",\"genderCode\":\"M\"," +
+                "\"phone\":\"0601020304\",\"email\":\"toto57@hotmail.fr\",\"salutationCode\":\"MME\",\"professions\":[{\"exProId\":\"50C\"," +
+                "\"code\":\"50\",\"categoryCode\":\"C\",\"salutationCode\":\"M\",\"lastName\":\"DUPONT\",\"firstName\":\"JIMMY\"," +
+                "\"expertises\":[{\"expertiseId\":\"SSM69\",\"typeCode\":\"S\",\"code\":\"SM69\"}],\"workSituations\":[{\"situId\":\"SSA04\"," +
+                "\"modeCode\":\"S\",\"activitySectorCode\":\"SA04\",\"pharmacistTableSectionCode\":\"AC36\",\"roleCode\":\"12\"," +
+                "\"registrationAuthority\":\"ARS/ARS/ARS\", \"structure\":{\"siteSIRET\":\"125 137 196 15574\",\"siteSIREN\":\"125 137 196\"," +
+                "\"siteFINESS\":null,\"legalEstablishmentFINESS\":null,\"structureTechnicalId\":\"1\"," +
+                "\"legalCommercialName\":\"Structure One\",\"publicCommercialName\":\"Structure One\",\"recipientAdditionalInfo\":\"info +\"," +
+                "\"geoLocationAdditionalInfo\":\"geoloc info +\",\"streetNumber\":\"1\",\"streetNumberRepetitionIndex\":\"bis\"," +
+                "\"streetCategoryCode\":\"rue\",\"streetLabel\":\"Zorro\",\"distributionMention\":\"c/o Bernardo\",\"cedexOffice\":\"75117\"," +
+                "\"postalCode\":\"75017\",\"communeCode\":\"75\",\"countryCode\":\"FR\",\"phone\":\"0123456789\",\"phone2\":\"0623456789\"," +
+                "\"fax\":\"0198765432\",\"email\":\"structure@one.fr\",\"departmentCode\":\"99\",\"oldStructureId\":\"101\"," +
+                "\"registrationAuthority\":\"CIA\"}}]}],\"ids\":[\"800000000001\", \"ALT-ID\"]}", Ps.class);
+
+        log.info(json.toJson(ps, Ps.class));
+        AmarUserAdapter amarUserAdapter = new AmarUserAdapter(ps);
+        amarUserAdapter
+            .getCivilStatus()
+            .getFirstNames()
+            .forEach(f -> Assertions.assertNotEquals("",f,"We found an empty first name that should have been filtered out"));
     }
 }

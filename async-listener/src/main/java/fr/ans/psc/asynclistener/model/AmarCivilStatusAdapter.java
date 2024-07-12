@@ -36,7 +36,9 @@ public class AmarCivilStatusAdapter extends CivilStatus {
     }
 
     private List<String> extractNames(List<FirstName> firstNames) {
-        return firstNames.stream().sorted(this::compareFirstNames).map(FirstName::getFirstName).collect(Collectors.toList());
+    return firstNames.stream()
+        .filter((FirstName f) -> f.getFirstName()!= null && !f.getFirstName().isBlank())
+        .sorted(this::compareFirstNames).map(FirstName::getFirstName).collect(Collectors.toList());
     }
 
     private int compareFirstNames(FirstName fn1, FirstName fn2) {
