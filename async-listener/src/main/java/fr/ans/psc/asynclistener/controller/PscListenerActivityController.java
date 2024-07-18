@@ -15,7 +15,6 @@
  */
 package fr.ans.psc.asynclistener.controller;
 
-import fr.ans.psc.asynclistener.model.RabbitQueueState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -58,33 +57,31 @@ public class PscListenerActivityController {
     }
 
     private boolean hasQueuedMessages() {
-        try {
-            ArrayList<String> queues = new ArrayList<>(Arrays.asList(QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES, QUEUE_PS_DELETE_MESSAGES));
-            for (String queue : queues) {
-                RabbitQueueState queueState = this.getQueueState(queue);
+        ArrayList<String> queues = new ArrayList<>(Arrays.asList(QUEUE_PS_CREATE_MESSAGES, QUEUE_PS_UPDATE_MESSAGES, QUEUE_PS_DELETE_MESSAGES));
+        for (String queue : queues) {
+            try {
+                QueueInformation queueState = this.getQueueState(queue);
                 if (queueState.getMessageCount() > 0) {
                     log.info("{} queue has {} messages and {} DLQ queue has consumed {} messages",
                             queue, queueState.getMessageCount(), queue, queueState.getConsumerCount());
                     return true;
                 }
+            } catch (AmqpException e) {
+                log.error("Error occurred when checking the contents of the queue: {} is null", queue, e);
             }
-
-            // all queues are empty
-            return false;
-        } catch (Exception e) {
-            log.error("Error occurred when checking if queues are empty ", e);
-            throw new AmqpException("Error occurred when checking if queues are empty");
         }
+
+        // all queues are empty
+        return false;
     }
 
-    private RabbitQueueState getQueueState(String queueName) {
+    private QueueInformation getQueueState(String queueName) throws AmqpException {
         QueueInformation queueInfo = rabbitAdmin.getQueueInfo(queueName);
 
         if (queueInfo != null) {
-            return new RabbitQueueState(queueInfo, queueName);
+            return queueInfo;
         } else {
-            log.error("Error occurred when getting queue message count: queue is null");
-            throw new AmqpException("Error occurred when getting queue message count");
+            throw new AmqpException("Error occurred when getting message count from " + queueName);
         }
     }
 }
