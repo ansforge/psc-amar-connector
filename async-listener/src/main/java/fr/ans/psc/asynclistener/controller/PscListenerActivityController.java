@@ -15,6 +15,7 @@
  */
 package fr.ans.psc.asynclistener.controller;
 
+import fr.ans.psc.asynclistener.consumer.MsgTimeChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.AmqpException;
@@ -53,7 +54,7 @@ public class PscListenerActivityController {
 
     @GetMapping(value = "/check-pending-messages", produces = MediaType.APPLICATION_JSON_VALUE)
     public Boolean isHandlingMessages() {
-        return hasQueuedMessages();
+        return hasQueuedMessages() && MsgTimeChecker.getInstance().hasRecentConsumptionTimestamp();
     }
 
     private boolean hasQueuedMessages() {

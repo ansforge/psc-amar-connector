@@ -18,6 +18,7 @@ package fr.ans.psc.asynclistener.controller;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import fr.ans.psc.asynclistener.consumer.MsgTimeChecker;
 import fr.ans.psc.asynclistener.utils.MemoryAppender;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -89,6 +90,7 @@ class PscListenerActivityControllerTest {
         QueueInformation createQueueState = new QueueInformation(QUEUE_PS_CREATE_MESSAGES, 10, 5);
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 20, 10);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 30, 15);
+        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(createQueueState);
@@ -109,6 +111,7 @@ class PscListenerActivityControllerTest {
         QueueInformation createQueueState = new QueueInformation(QUEUE_PS_CREATE_MESSAGES, 0, 0);
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 0, 0);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 0, 0);
+        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(createQueueState);
@@ -126,6 +129,7 @@ class PscListenerActivityControllerTest {
         QueueInformation createQueueState = new QueueInformation(QUEUE_PS_CREATE_MESSAGES, 0, 0);
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 5, 2);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 0, 0);
+        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(createQueueState);
@@ -142,6 +146,8 @@ class PscListenerActivityControllerTest {
 
     @Test()
     void testIsHandlingMessagesFalseWhenQueuesAreNull() {
+        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
+
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(null);
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_UPDATE_MESSAGES))
@@ -159,6 +165,7 @@ class PscListenerActivityControllerTest {
     void testIsHandlingMessagesTrueWhenOneQueueIsNull() {
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 20, 10);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 0, 0);
+        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(null);

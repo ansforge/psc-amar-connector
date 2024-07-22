@@ -60,6 +60,8 @@ public class Listener {
 
     private final String OTHER_IDS = "otherIds";
 
+    private MsgTimeChecker msgTimeChecker;
+
 
     /**
      * The json.
@@ -83,11 +85,13 @@ public class Listener {
     private void init() {
         psapi = new PsApi(client);
         amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
+        msgTimeChecker = MsgTimeChecker.getInstance();
     }
 
     @RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)
     public void receivePsCreateAMARMessage(Message message) {
         log.info("Starting message consuming");
+        msgTimeChecker.setMsgConsumptionTimestamp();
         // get last stored Ps in API
         String messageBody = new String(message.getBody());
         log.info("Message body : {}", messageBody);
@@ -146,6 +150,7 @@ public class Listener {
     @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
     public void receivePsUpdateAMARMessage(Message message) {
         log.info("Starting message consuming");
+        msgTimeChecker.setMsgConsumptionTimestamp();
         // get last stored Ps in API
         String messageBody = new String(message.getBody());
         log.info("Message body : {}", messageBody);
@@ -203,6 +208,7 @@ public class Listener {
 
     @RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
     public void receivePsDeleteAMARMessage(Message message) {
+        msgTimeChecker.setMsgConsumptionTimestamp();
         // get last stored Ps in API
         String messageBody = new String(message.getBody());
         Ps queuedPs = json.fromJson(messageBody, Ps.class);
