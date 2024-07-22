@@ -42,8 +42,6 @@ import com.google.gson.Gson;
 import fr.ans.psc.asynclistener.consumer.Listener;
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.boot.test.mock.mockito.MockBean;
 
 @SpringBootTest
 @ContextConfiguration(classes = PsclAsyncListenerApplication.class)
