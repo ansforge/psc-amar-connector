@@ -34,6 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
 
@@ -92,16 +95,96 @@ public class Listener {
         String messageBody = new String(message.getBody());
         log.info("Message body : {}", messageBody);
         Ps queuedPs = json.fromJson(messageBody, Ps.class);
-        Ps storedPs;
+        List<String> otherIds;
 
+        Ps storedPs = getPsFromSecPscDb(queuedPs, message);
+        if (storedPs == null) {
+            return;
+        } else {
+            otherIds = storedPs.getIds().stream().filter(id -> !queuedPs.getNationalId().equals(id)).collect(Collectors.toList());
+        }
+
+        // AMAR call
+        this.convertAndSendCreateToAmar(queuedPs, storedPs, message);
+
+        if (!otherIds.isEmpty()) {
+            this.handleOtherIdsForAmarCreate(queuedPs, storedPs, otherIds, message);
+        }
+    }
+
+    @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
+    public void receivePsUpdateAMARMessage(Message message) {
+        log.info("Starting message consuming");
+        // get last stored Ps in API
+        String messageBody = new String(message.getBody());
+        Ps queuedPs = json.fromJson(messageBody, Ps.class);
+        List<String> otherIds;
+        log.info("Message body : {}", messageBody);
+
+        Ps storedPs = getPsFromSecPscDb(queuedPs, message);
+        if (storedPs == null) {
+            return;
+        } else {
+            otherIds = storedPs.getIds().stream().filter(id -> !queuedPs.getNationalId().equals(id)).collect(Collectors.toList());
+        }
+
+        // AMAR call
+        this.sendUpdateToAmar(queuedPs, storedPs, message);
+
+
+        if (!otherIds.isEmpty()) {
+            this.handleOtherIdsForAmarUpdate(queuedPs, storedPs, otherIds, message);
+        }
+    }
+
+    @RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
+    public void receivePsDeleteAMARMessage(Message message) {
+        // get last stored Ps in API
+        String messageBody = new String(message.getBody());
+        Ps queuedPs = json.fromJson(messageBody, Ps.class);
+        Ps storedPs;
+        List<String> otherIds;
+
+        // 3 possibilities while getting Ps from sec-psc db :
+        // API sends back a 200 http status code (no RestClientResponseException raised) : Ps still exists, we exit
+        // API sends back a 410 http status code : no Ps activated in our db, we continue to AMAR
+        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
+        try {
+            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
+            if (storedPs != null) {
+                log.info("Ps {} still exists in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
+                return;
+            }
+        } catch (RestClientResponseException e) {
+            if (e.getRawStatusCode() != HttpStatus.GONE.value()) {
+                log.info("API error, Ps {} is pushed to dead letter queue for later treatment", queuedPs.getNationalId());
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                return;
+            }
+        }
+
+        otherIds = queuedPs.getIds().stream().filter(id -> !queuedPs.getNationalId().equals(id)).collect(Collectors.toList());
+
+
+        // AMAR call
+        this.sendDeleteToAmar(queuedPs, message);
+
+        if (!otherIds.isEmpty()) {
+            this.handleOtherIdsForAmarDelete(queuedPs, otherIds, message);
+        }
+    }
+
+    private Ps getPsFromSecPscDb(Ps queuedPs, Message message) {
         // 3 possibilities while getting Ps from sec-psc db :
         // API sends back a 200 http status code (no RestClientResponseException raised) : we continue to AMAR
         // API sends back a 410 http status code : no Ps activated in our db, we just exit
         // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
         try {
-            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
+            Ps storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
             if (storedPs == null) {
                 log.error("Stored Ps not correctly pulled");
+            } else {
+                return storedPs;
             }
         } catch (RestClientResponseException e) {
             if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
@@ -110,10 +193,11 @@ public class Listener {
                 log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
                 rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
             }
-            return;
         }
+        return null;
+    }
 
-        // AMAR call
+    private void convertAndSendCreateToAmar(Ps queuedPs, Ps storedPs, Message message) {
         try {
             log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
             // map Ps with AMAR model
@@ -143,35 +227,47 @@ public class Listener {
         }
     }
 
-    @RabbitListener(queues = QUEUE_PS_UPDATE_MESSAGES)
-    public void receivePsUpdateAMARMessage(Message message) {
-        log.info("Starting message consuming");
-        // get last stored Ps in API
-        String messageBody = new String(message.getBody());
-        log.info("Message body : {}", messageBody);
-        Ps queuedPs = json.fromJson(messageBody, Ps.class);
-        Ps storedPs;
+    private void handleOtherIdsForAmarCreate(Ps queuedPs, Ps storedPs, List<String> otherIds, Message message) {
+        for (String otherId : otherIds) {
+            queuedPs.setNationalId(otherId);
+            storedPs.setNationalId(otherId);
+            Message otherIdMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
 
-        // 3 possibilities while getting Ps from sec-psc db :
-        // API sends back a 200 http status code (no RestClientResponseException raised) : we continue to AMAR
-        // API sends back a 410 http status code : no Ps activated in our db, we just exit
-        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
-        try {
-            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
-            if (storedPs == null) {
-                log.error("Stored Ps not correctly pulled");
+            try {
+                log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
+                // map Ps with AMAR model
+                AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
+                // call amar client : post /put
+                if (isSendToAMAR) {
+                    // we should use the PUT method because we want the job done without checking
+                    amarUserApi.createUser(amarUser);
+                    log.debug("PS {} successfully stored in AMAR, routing key was {}",
+                            queuedPs.getNationalId(),
+                            message.getMessageProperties().getReceivedRoutingKey());
+                } else {
+                    log.info("PS {} successfully created in test env", queuedPs.getNationalId());
+                    log.debug("Amar User looked like : {}", amarUser);
+                }
+
+            } catch (RestClientResponseException e) {
+                if (HttpStatus.CONFLICT.value() == e.getRawStatusCode()) {
+                    log.warn("PS {} not stored in AMAR, exiting loop and retrying main id in update queue", queuedPs.getNationalId());
+                    rabbitTemplate.send(QUEUE_PS_UPDATE_MESSAGES, PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                } else {
+                    log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+                    log.error("AMAR side Exception", e);
+                    rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), message);
+                }
+                break;
+            } catch (Exception e) {
+                log.error("An exception occurred", e);
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), message);
+                break;
             }
-        } catch (RestClientResponseException e) {
-            if (e.getRawStatusCode() == HttpStatus.GONE.value()) {
-                log.info("Ps {} does not exist in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
-            } else {
-                log.info("API error, Ps {} is pushed to parking lot for latter treatment", queuedPs.getNationalId());
-                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, message.getMessageProperties().getReceivedRoutingKey(), message);
-            }
-            return;
         }
+    }
 
-        // AMAR call
+    private void sendUpdateToAmar(Ps queuedPs, Ps storedPs, Message message) {
         try {
             log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
             // map Ps with AMAR model
@@ -201,32 +297,18 @@ public class Listener {
         }
     }
 
-    @RabbitListener(queues = QUEUE_PS_DELETE_MESSAGES)
-    public void receivePsDeleteAMARMessage(Message message) {
-        // get last stored Ps in API
-        String messageBody = new String(message.getBody());
-        Ps queuedPs = json.fromJson(messageBody, Ps.class);
-        Ps storedPs;
+    private void handleOtherIdsForAmarUpdate(Ps queuedPs, Ps storedPs, List<String> otherIds, Message message) {
+        for (String otherId : otherIds) {
+            queuedPs.setNationalId(otherId);
+            storedPs.setNationalId(otherId);
 
-        // 3 possibilities while getting Ps from sec-psc db :
-        // API sends back a 200 http status code (no RestClientResponseException raised) : Ps still exists, we exit
-        // API sends back a 410 http status code : no Ps activated in our db, we continue to AMAR
-        // API sends back any other "failing" code (400, 404, 500) : we move message to parking lot
-        try {
-            storedPs = psapi.getPsById(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8), OTHER_IDS);
-            if (storedPs != null) {
-                log.info("Ps {} still exists in sec-psc database, will not be sent to AMAR", queuedPs.getNationalId());
-                return;
-            }
-        } catch (RestClientResponseException e) {
-            if (e.getRawStatusCode() != HttpStatus.GONE.value()) {
-                log.info("API error, Ps {} is pushed to dead letter queue for later treatment", queuedPs.getNationalId());
-                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
-                return;
-            }
+            Message otherIdMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
+
+            this.sendUpdateToAmar(queuedPs, storedPs, otherIdMessage);
         }
+    }
 
-        // AMAR call
+    private void sendDeleteToAmar(Ps queuedPs, Message message) {
         try {
             if (isSendToAMAR) {
                 amarUserApi.deleteUser(URLEncoder.encode(queuedPs.getNationalId(), StandardCharsets.UTF_8));
@@ -243,7 +325,7 @@ public class Listener {
             } else {
                 // any error in url, headers, etc
                 log.warn("PS {} not deleted in AMAR, moved to dead letter queue", queuedPs.getNationalId());
-                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES,PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
             }
         } catch (RestClientException e) {
             // no connection established
@@ -251,7 +333,16 @@ public class Listener {
             log.error("Exception was", e);
             rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, PS_DELETE_MESSAGES_QUEUE_ROUTING_KEY, message);
         } catch (Exception e) {
-            log.error("an Exception occured", e);
+            log.error("an Exception occurred", e);
+        }
+    }
+
+    private void handleOtherIdsForAmarDelete(Ps queuedPs, List<String> otherIds, Message message) {
+        for (String otherId : otherIds) {
+            queuedPs.setNationalId(otherId);
+            Message otherIdMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
+
+            this.sendDeleteToAmar(queuedPs, otherIdMessage);
         }
     }
 }
