@@ -236,12 +236,40 @@ public class Listener {
     private void handleOtherIdsForAmarCreate(Ps queuedPs, Ps storedPs, List<String> otherIds, Message message) {
         for (String otherId : otherIds) {
             queuedPs.setNationalId(otherId);
-            if (storedPs != null) {
-                storedPs.setNationalId(otherId);
-            }
+            storedPs.setNationalId(otherId);
             Message otherIdMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
 
-            this.convertAndSendCreateToAmar(queuedPs, storedPs, otherIdMessage);
+            try {
+                log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
+                // map Ps with AMAR model
+                AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
+                // call amar client : post /put
+                if (isSendToAMAR) {
+                    // we should use the PUT method because we want the job done without checking
+                    amarUserApi.createUser(amarUser);
+                    log.debug("PS {} successfully stored in AMAR, routing key was {}",
+                            queuedPs.getNationalId(),
+                            message.getMessageProperties().getReceivedRoutingKey());
+                } else {
+                    log.info("PS {} successfully created in test env", queuedPs.getNationalId());
+                    log.debug("Amar User looked like : {}", amarUser);
+                }
+
+            } catch (RestClientResponseException e) {
+                if (HttpStatus.CONFLICT.value() == e.getRawStatusCode()) {
+                    log.warn("PS {} not stored in AMAR, exiting loop and retrying main id in update queue", queuedPs.getNationalId());
+                    rabbitTemplate.send(QUEUE_PS_UPDATE_MESSAGES, PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY, message);
+                } else {
+                    log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
+                    log.error("AMAR side Exception", e);
+                    rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), message);
+                }
+                break;
+            } catch (Exception e) {
+                log.error("An exception occurred", e);
+                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), message);
+                break;
+            }
         }
     }
 
@@ -276,58 +304,13 @@ public class Listener {
     }
 
     private void handleOtherIdsForAmarUpdate(Ps queuedPs, Ps storedPs, List<String> otherIds, Message message) {
-        List<String> successfullyUpdatedIds = new ArrayList<>();
-        List<String> failedUpdateIds = new ArrayList<>(otherIds);
-
         for (String otherId : otherIds) {
             queuedPs.setNationalId(otherId);
             storedPs.setNationalId(otherId);
+
             Message otherIdMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
 
-            try {
-                log.info("Converting Ps {} to AMAR format", queuedPs.getNationalId());
-                // map Ps with AMAR model
-                AmarUserAdapter amarUser = new AmarUserAdapter(storedPs);
-                // call amar client : post /put
-                if (isSendToAMAR) {
-                    // we should use the PUT method because we want the job done without checking
-                    amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
-                    log.debug("PS {} successfully stored in AMAR, routing key was {}",
-                            queuedPs.getNationalId(),
-                            otherIdMessage.getMessageProperties().getReceivedRoutingKey());
-                } else {
-                    log.info("PS {} successfully updated in test env", queuedPs.getNationalId());
-                    log.debug("Amar User looked like : {}", amarUser);
-                }
-
-                successfullyUpdatedIds.add(otherId);
-            } catch (RestClientResponseException e) {
-                if (HttpStatus.CONFLICT.value() == e.getRawStatusCode()) {
-                    failedUpdateIds.removeAll(successfullyUpdatedIds);
-                    log.warn("PS {} not stored in AMAR, exiting loop and moving other ids to create queue: {}", queuedPs.getNationalId(), String.join(", ", failedUpdateIds));
-                    //send failed ids to create queue
-                    this.sendConflictingIdsToCreateQueue(queuedPs, message, failedUpdateIds);
-                } else {
-                    log.warn("PS {} not stored in AMAR, moved to dead letter queue", queuedPs.getNationalId());
-                    log.error("AMAR side Exception", e);
-                    rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), otherIdMessage);
-                }
-                break;
-            } catch (Exception e) {
-                log.error("An exception occurred", e);
-                rabbitTemplate.send(DLX_EXCHANGE_MESSAGES, otherIdMessage.getMessageProperties().getReceivedRoutingKey(), otherIdMessage);
-                break;
-            }
-        }
-    }
-
-    private void sendConflictingIdsToCreateQueue(Ps queuedPs, Message message, List<String> failedUpdateIds) {
-        if (!failedUpdateIds.isEmpty()) {
-            failedUpdateIds.forEach(failedId -> {
-                queuedPs.setNationalId(failedId);
-                Message updateMessage = new Message(json.toJson(queuedPs).getBytes(StandardCharsets.UTF_8), message.getMessageProperties());
-                rabbitTemplate.send(QUEUE_PS_UPDATE_MESSAGES, updateMessage.getMessageProperties().getReceivedRoutingKey(), updateMessage);
-            });
+            this.sendUpdateToAmar(queuedPs, storedPs, otherIdMessage);
         }
     }
 
