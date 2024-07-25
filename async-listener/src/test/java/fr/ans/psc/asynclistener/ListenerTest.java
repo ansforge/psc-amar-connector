@@ -22,6 +22,7 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
+import com.github.tomakehurst.wiremock.stubbing.Scenario;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.asynclistener.utils.MemoryAppender;
 import fr.ans.psc.model.Ps;
@@ -40,6 +41,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.google.gson.Gson;
 
 import fr.ans.psc.asynclistener.consumer.Listener;
+
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -108,6 +110,60 @@ class ListenerTest {
                 "PS 1 successfully stored in AMAR, routing key was PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
                 .isTrue();
 
+        assertThat(memoryAppender.contains(
+                "ALT-ID successfully stored in AMAR, routing key was PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "ALT-ID2 successfully stored in AMAR, routing key was PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
+    }
+
+    @Test
+    void testCreatePsHandleOtherIdConflictOk() throws InterruptedException {
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBodyFile("ps2.json")
+                .withStatus(200)));
+
+        httpMockServer.stubFor(post("/api/lura/ing/rass/user")
+                .inScenario("create-other-id-conflict")
+                .whenScenarioStateIs(Scenario.STARTED)
+                .willReturn(aResponse()
+                        .withStatus(200))
+                .willSetStateTo("other-id-conflict"));
+
+        httpMockServer.stubFor(post("/api/lura/ing/rass/user")
+                .inScenario("create-other-id-conflict")
+                .whenScenarioStateIs("other-id-conflict")
+                .willReturn(aResponse()
+                        .withStatus(409)));
+
+        Gson gson = new Gson();
+        Ps queuedPs = getTestingPs();
+        producer.sendPsMessage(PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
+        Thread.sleep(3000L);
+
+        assertThat(memoryAppender.contains(
+                "PS 1 successfully stored in AMAR, routing key was PS_CREATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID not stored in AMAR, exiting loop and retrying main id in update queue", Level.WARN))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID2 not stored in AMAR, exiting loop and retrying main id in update queue", Level.WARN))
+                .isFalse();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID successfully stored in AMAR, routing key was PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isFalse();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID2 successfully stored in AMAR, routing key was PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isFalse();
     }
 
     @Test
@@ -155,6 +211,9 @@ class ListenerTest {
         httpMockServer.stubFor(delete("/api/lura/ing/rass/user?nationalId=1").willReturn(aResponse()
                 .withStatus(200)));
 
+        httpMockServer.stubFor(delete("/api/lura/ing/rass/user?nationalId=ALT-ID").willReturn(aResponse()
+                .withStatus(200)));
+
         Gson gson = new Gson();
         Ps queuedPs = getTestingPs();
         AmarUserAdapter amarUser = new AmarUserAdapter(queuedPs);
@@ -163,6 +222,10 @@ class ListenerTest {
 
         assertThat(memoryAppender.contains(
                 "PS 1 successfully deleted in AMAR", Level.DEBUG))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "ALT-ID successfully deleted in AMAR", Level.DEBUG))
                 .isTrue();
     }
 
@@ -199,6 +262,40 @@ class ListenerTest {
 
         assertThat(memoryAppender.contains(
                 "PS 1 not deleted in AMAR, moved to dead letter queue", Level.WARN))
+                .isTrue();
+    }
+
+    @Test
+    void testUpdatePsOk() throws InterruptedException {
+        httpMockServer.stubFor(get("/api/v2/ps/1?include=otherIds").willReturn(aResponse()
+                .withHeader("Content-Type", "application/json")
+                .withBodyFile("ps2.json")
+                .withStatus(200)));
+
+        httpMockServer.stubFor(put("/api/lura/ing/rass/user?nationalId=1").willReturn(aResponse()
+                .withStatus(200)));
+
+        httpMockServer.stubFor(put("/api/lura/ing/rass/user?nationalId=ALT-ID").willReturn(aResponse()
+                .withStatus(200)));
+
+        httpMockServer.stubFor(put("/api/lura/ing/rass/user?nationalId=ALT-ID2").willReturn(aResponse()
+                .withStatus(200)));
+
+        Gson gson = new Gson();
+        Ps queuedPs = getTestingPs();
+        producer.sendPsMessage(PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY, gson.toJson(queuedPs, Ps.class));
+        Thread.sleep(3000L);
+
+        assertThat(memoryAppender.contains(
+                "PS 1 successfully stored in AMAR, routing key was PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID successfully stored in AMAR, routing key was PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
+                .isTrue();
+
+        assertThat(memoryAppender.contains(
+                "PS ALT-ID2 successfully stored in AMAR, routing key was PS_UPDATE_MESSAGES_QUEUE_ROUTING_KEY", Level.DEBUG))
                 .isTrue();
     }
 
