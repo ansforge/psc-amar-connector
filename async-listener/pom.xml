@@ -21,7 +21,7 @@
 	<parent>
 		<groupId>fr.ans.psc</groupId>
 		<artifactId>async-listener-root</artifactId>
-		<version>1.0.3</version>
+		<version>1.0.4-SNAPSHOT</version>
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>fr.ans.in.user</groupId>
 			<artifactId>in-user-api</artifactId>
-			<version>1.0.3</version>
+			<version>1.0.4-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
