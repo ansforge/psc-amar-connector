@@ -17,9 +17,6 @@ package fr.ans.psc.asynclistener;
 
 import fr.ans.psc.asynclistener.consumer.MsgTimeChecker;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.ContextConfiguration;
 
 import java.time.Instant;
 
@@ -28,9 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
-@ContextConfiguration(classes = PsclAsyncListenerApplication.class)
-@ActiveProfiles("test")
 class MsgTimeCheckerTest {
 
     @Test
