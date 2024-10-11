@@ -54,7 +54,7 @@ public class PscListenerActivityController {
 
     @GetMapping(value = "/check-pending-messages", produces = MediaType.APPLICATION_JSON_VALUE)
     public Boolean isHandlingMessages() {
-        return hasQueuedMessages() && MsgTimeChecker.getInstance().hasRecentConsumptionTimestamp();
+        return hasQueuedMessages() || MsgTimeChecker.getInstance().hasRecentConsumptionTimestamp();
     }
 
     private boolean hasQueuedMessages() {
