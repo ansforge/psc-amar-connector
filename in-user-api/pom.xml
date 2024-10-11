@@ -31,14 +31,14 @@
 	<parent>
           <groupId>fr.ans.psc</groupId>
           <artifactId>async-listener-root</artifactId>
-          <version>1.0.4-SNAPSHOT</version>
+          <version>1.0.4</version>
           <relativePath>../pom.xml</relativePath>
 	</parent>
 	<groupId>fr.ans.in.user</groupId>
 	<artifactId>in-user-api</artifactId>
 	<packaging>jar</packaging>
 	<name>in-user-api</name>
-	<version>1.0.4-SNAPSHOT</version>
+	<version>1.0.4</version>
 	<url>https://github.com/swagger-api/swagger-codegen</url>
 	<description>Client in user api (spring RestTemplate)</description>
 	<licenses>
