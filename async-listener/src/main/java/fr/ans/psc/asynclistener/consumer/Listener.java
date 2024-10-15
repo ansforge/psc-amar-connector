@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static fr.ans.psc.rabbitmq.conf.PscRabbitMqConfiguration.*;
+import java.util.Collections;
 
 /**
  * The Class Listener.
@@ -168,8 +169,12 @@ public class Listener {
                 return;
             }
         }
-
-        otherIds = queuedPs.getIds().stream().filter(id -> !queuedPs.getNationalId().equals(id)).collect(Collectors.toList());
+        
+        if(queuedPs.getIds()==null) {
+          otherIds = Collections.emptyList();
+        } else {
+          otherIds = queuedPs.getIds().stream().filter(id -> !queuedPs.getNationalId().equals(id)).collect(Collectors.toList());
+        }
 
 
         // AMAR call
