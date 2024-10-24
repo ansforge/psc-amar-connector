@@ -47,6 +47,7 @@ job "async-listener" {
       }
       template {
         data = <<EOF
+server.servlet.context-path=/psc-amar-connector
 {{ range service "${nomad_namespace}-psc-rabbitmq" }}
 spring.rabbitmq.host={{ .Address }}
 spring.rabbitmq.port={{ .Port }}{{ end }}

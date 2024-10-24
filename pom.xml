@@ -22,7 +22,7 @@
 
     <groupId>fr.ans.psc</groupId>
     <artifactId>async-listener-root</artifactId>
-    <version>1.0.4</version>
+    <version>1.1.2</version>
     <packaging>pom</packaging>
     <inceptionYear>2022-2024</inceptionYear>
 
@@ -45,7 +45,7 @@
     </modules>
     <scm>
         <connection>scm:git:${project.basedir}</connection>
-        <tag>1.0.4</tag>
+        <tag>1.1.2</tag>
     </scm>
     <build>
         <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
