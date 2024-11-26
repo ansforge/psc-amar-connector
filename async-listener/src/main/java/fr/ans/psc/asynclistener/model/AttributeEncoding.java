@@ -15,13 +15,17 @@
  */
 package fr.ans.psc.asynclistener.model;
 
-import fr.ans.psc.amar.model.ContactInfo;
-import fr.ans.psc.model.Ps;
-
-public class AmarContactInfoAdapter extends ContactInfo {
-
-    public AmarContactInfoAdapter(Ps ps) {
-        setEmail(AttributeEncoding.encodeStringAttribute(ps.getEmail()));
-        setPhone(AttributeEncoding.encodeStringAttribute(ps.getPhone()));
+/**
+ * This object is used to encode attributes as required by Amar rules.
+ * @author edegenetais
+ */
+public class AttributeEncoding {
+  private AttributeEncoding(){}
+  public static String encodeStringAttribute(String psValue){
+    if("".equals(psValue)){
+      return null;
+    } else {
+      return psValue;
     }
+  }
 }

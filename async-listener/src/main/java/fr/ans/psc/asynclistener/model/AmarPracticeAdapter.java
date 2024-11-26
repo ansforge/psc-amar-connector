@@ -1,11 +1,11 @@
-/**
- * Copyright (C) 2022-2023 Agence du Numérique en Santé (ANS) (https://esante.gouv.fr)
+/*
+ * Copyright © 2022-2024 Agence du Numérique en Santé (ANS) (https://esante.gouv.fr)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *         http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,15 +28,15 @@ import java.util.stream.Collectors;
 public class AmarPracticeAdapter extends Practice {
 
     public AmarPracticeAdapter(Profession profession) {
-        setProfessionCode(profession.getCode());
-        setProfessionalCategoryCode(profession.getCategoryCode());
-        setProfessionalLastName(profession.getLastName());
-        setProfessionalFirstName(profession.getFirstName());
-        setProfessionalCivilityTitle(profession.getSalutationCode());
+        setProfessionCode(AttributeEncoding.encodeStringAttribute(profession.getCode()));
+        setProfessionalCategoryCode(AttributeEncoding.encodeStringAttribute(profession.getCategoryCode()));
+        setProfessionalLastName(AttributeEncoding.encodeStringAttribute(profession.getLastName()));
+        setProfessionalFirstName(AttributeEncoding.encodeStringAttribute(profession.getFirstName()));
+        setProfessionalCivilityTitle(AttributeEncoding.encodeStringAttribute(profession.getSalutationCode()));
 
         Expertise mainExpertise = extractExpertise(profession);
-        setExpertiseCode(mainExpertise != null ? mainExpertise.getCode() : "");
-        setExpertiseTypeCode(mainExpertise != null ? mainExpertise.getTypeCode() : "");
+        setExpertiseCode(mainExpertise != null ? mainExpertise.getCode() : null);
+        setExpertiseTypeCode(mainExpertise != null ? mainExpertise.getTypeCode() : null);
 
         List<Activity> activities = new ArrayList<>();
         profession.getWorkSituations().forEach(workSituation -> activities.add(new AmarActivityAdapter(workSituation)));

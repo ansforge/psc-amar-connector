@@ -15,13 +15,30 @@
  */
 package fr.ans.psc.asynclistener.model;
 
-import fr.ans.psc.amar.model.ContactInfo;
-import fr.ans.psc.model.Ps;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-public class AmarContactInfoAdapter extends ContactInfo {
+/**
+ *
+ * @author edegenetais
+ */
+public class AttributeEncodingTest {
+  @Test
+  public void shouldGiveNullForNull() {
+    String actual=AttributeEncoding.encodeStringAttribute(null);
+    Assertions.assertNull(actual);
+  }
 
-    public AmarContactInfoAdapter(Ps ps) {
-        setEmail(AttributeEncoding.encodeStringAttribute(ps.getEmail()));
-        setPhone(AttributeEncoding.encodeStringAttribute(ps.getPhone()));
-    }
+  @Test
+  public void shouldGiveNullForEmpty() {
+    String actual=AttributeEncoding.encodeStringAttribute("");
+    Assertions.assertNull(actual);
+  }
+  
+  @Test
+  public void shouldKeepNonEmptValues(){
+    final String initialValue = "My attribute is rich";
+    String actual=AttributeEncoding.encodeStringAttribute(initialValue);
+    Assertions.assertEquals(initialValue, actual);
+  }
 }

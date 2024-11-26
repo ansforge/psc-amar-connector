@@ -13,15 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package fr.ans.psc.asynclistener.model;
+package fr.ans.psc.asynclistener.config;
 
-import fr.ans.psc.amar.model.ContactInfo;
-import fr.ans.psc.model.Ps;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-public class AmarContactInfoAdapter extends ContactInfo {
+@Configuration
+@Slf4j
+public class RabbitMQConfig {
 
-    public AmarContactInfoAdapter(Ps ps) {
-        setEmail(AttributeEncoding.encodeStringAttribute(ps.getEmail()));
-        setPhone(AttributeEncoding.encodeStringAttribute(ps.getPhone()));
+    @Bean
+    public RabbitAdmin rabbitAdmin(ConnectionFactory connectionFactory) {
+        return new RabbitAdmin(connectionFactory);
     }
 }
