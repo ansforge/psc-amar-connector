@@ -14,17 +14,26 @@
 # limitations under the License.
 #
 
+# Étape de build Maven
 FROM maven:3-jdk-11 AS build
 COPY settings-docker.xml /usr/share/maven/ref/
 COPY async-listener /usr/src/app/async-listener
 COPY in-user-api /usr/src/app/in-user-api
 COPY pom.xml /usr/src/app
 ARG PROSANTECONNECT_PACKAGE_GITHUB_TOKEN
-RUN mvn -f /usr/src/app/pom.xml -gs /usr/share/maven/ref/settings-docker.xml -Dinternal.repo.username=${PROSANTECONNECT_PACKAGE_GITHUB_TOKEN} -DskipTests clean package
-
+RUN mvn -f /usr/src/app/pom.xml \
+    -gs /usr/share/maven/ref/settings-docker.xml \
+    -Dinternal.repo.username=${PROSANTECONNECT_PACKAGE_GITHUB_TOKEN} \
+    -DskipTests clean package
+# Étape finale
 FROM openjdk:11-slim-buster
-RUN apt update
+# Contourner les erreurs dues à la fin de support de Buster
+RUN echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid && \
+    sed -i 's|http://deb.debian.org/debian%7Chttp://archive.debian.org/debian%7Cg' /etc/apt/sources.list && \
+    sed -i 's|http://security.debian.org/debian-security%7Chttp://archive.debian.org/debian-security%7Cg' /etc/apt/sources.list && \
+    apt update && apt upgrade -y && \
+    apt clean && rm -rf /var/lib/apt/lists/*
 COPY --from=build /usr/src/app/async-listener/target/async-listener-*.jar /usr/app/async-listener.jar
 USER daemon
 EXPOSE 8080
-ENTRYPOINT ["java","-jar","/usr/app/async-listener.jar"]
+ENTRYPOINT ["java", "-jar", "/usr/app/async-listener.jar"]
