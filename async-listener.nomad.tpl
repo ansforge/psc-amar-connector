@@ -24,6 +24,7 @@ job "async-listener" {
     }
 
     network {
+      mode = "host"
       port "http" {
         to = 8080
       }
