@@ -40,6 +40,8 @@ job "async-listener" {
       driver = "docker"
       env {
         JAVA_TOOL_OPTIONS = "-Dspring.config.location=/secrets/application.properties -Xms256m -Xmx512m -XX:+UseG1GC"
+        HTTP_PROXY  = "http://51.15.136.142:80"
+        HTTPS_PROXY = "http://51.15.136.142:443"
       }
       config {
         image = "${artifact.image}:${artifact.tag}"
