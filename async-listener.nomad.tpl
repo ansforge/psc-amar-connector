@@ -40,13 +40,12 @@ job "async-listener" {
       driver = "docker"
       env {
         JAVA_TOOL_OPTIONS = "-Dspring.config.location=/secrets/application.properties -Xms256m -Xmx512m -XX:+UseG1GC"
-        HTTP_PROXY  = "http://51.15.136.142:80"
-        HTTPS_PROXY = "http://51.15.136.142:443"
+
       }
       config {
         image = "${artifact.image}:${artifact.tag}"
         ports = ["http"]
-        extra_hosts = ["in.api.henix.asipsante.fr:192.168.43.99", "in.api.preprod.henix.asipsante.fr:192.168.43.99"]
+        extra_hosts = ["in.api.preprod.henix.asipsante.fr:172.16.0.6"]
       }
       template {
         data = <<EOF
