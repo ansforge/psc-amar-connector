@@ -38,6 +38,8 @@ job "async-listener" {
         mode = "fail"
       }
       driver = "docker"
+      user = "root"
+
       env {
         JAVA_TOOL_OPTIONS = "-Dspring.config.location=/secrets/application.properties -Xms256m -Xmx512m -XX:+UseG1GC"
 
