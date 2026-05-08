@@ -16,26 +16,18 @@
 package fr.ans.psc.asynclistener.consumer;
 
 import lombok.Getter;
+import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.Instant;
 
 @Getter
+@Component
 public class MsgTimeChecker {
 
     private static final int MSG_ACTIVITY_WINDOW = 3; // in seconds
 
     private volatile Instant msgConsumptionTimestamp = null;
-
-    private MsgTimeChecker() {}
-    
-    private static class Holder {
-        private static final MsgTimeChecker INSTANCE = new MsgTimeChecker();
-    }
-    
-    public static MsgTimeChecker getInstance() {
-        return Holder.INSTANCE;
-    } 
 
     public synchronized void setMsgConsumptionTimestamp() {
         this.msgConsumptionTimestamp = Instant.now();

@@ -49,7 +49,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
-@ContextConfiguration(classes = PscListenerActivityController.class)
+@ContextConfiguration(classes = {PscListenerActivityController.class, MsgTimeChecker.class})
 @AutoConfigureMockMvc
 class PscListenerActivityControllerTest {
 
@@ -61,6 +61,9 @@ class PscListenerActivityControllerTest {
 
     @MockBean
     private RabbitAdmin rabbitAdmin;
+
+    @Autowired
+    private MsgTimeChecker msgTimeChecker;
 
     private MemoryAppender memoryAppender;
 
@@ -94,7 +97,7 @@ class PscListenerActivityControllerTest {
         QueueInformation createQueueState = new QueueInformation(QUEUE_PS_CREATE_MESSAGES, 10, 5);
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 20, 10);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 30, 15);
-        MsgTimeChecker.getInstance().setMsgConsumptionTimestamp();
+        msgTimeChecker.setMsgConsumptionTimestamp();
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(createQueueState);
@@ -115,7 +118,7 @@ class PscListenerActivityControllerTest {
         QueueInformation createQueueState = new QueueInformation(QUEUE_PS_CREATE_MESSAGES, 0, 0);
         QueueInformation updateQueueState = new QueueInformation(QUEUE_PS_UPDATE_MESSAGES, 0, 0);
         QueueInformation deleteQueueState = new QueueInformation(QUEUE_PS_DELETE_MESSAGES, 0, 0);
-        MsgTimeChecker.getInstance().setTimestamp(Instant.now().minus(1, ChronoUnit.MINUTES));
+        msgTimeChecker.setTimestamp(Instant.now().minus(1, ChronoUnit.MINUTES));
 
         when(rabbitAdmin.getQueueInfo(QUEUE_PS_CREATE_MESSAGES))
                 .thenReturn(createQueueState);

@@ -22,21 +22,21 @@ import org.junit.jupiter.api.Test;
  *
  * @author edegenetais
  */
-public class AttributeEncodingTest {
+class AttributeEncodingTest {
   @Test
-  public void shouldGiveNullForNull() {
+  void shouldGiveNullForNull() {
     String actual=AttributeEncoding.encodeStringAttribute(null);
     Assertions.assertNull(actual);
   }
 
   @Test
-  public void shouldGiveNullForEmpty() {
+  void shouldGiveNullForEmpty() {
     String actual=AttributeEncoding.encodeStringAttribute("");
     Assertions.assertNull(actual);
   }
   
   @Test
-  public void shouldKeepNonEmptValues(){
+  void shouldKeepNonEmptValues(){
     final String initialValue = "My attribute is rich";
     String actual=AttributeEncoding.encodeStringAttribute(initialValue);
     Assertions.assertEquals(initialValue, actual);
