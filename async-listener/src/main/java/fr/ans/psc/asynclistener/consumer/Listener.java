@@ -64,7 +64,7 @@ public class Listener {
 
     private final String OTHER_IDS = "otherIds";
 
-    private MsgTimeChecker msgTimeChecker;
+    private final MsgTimeChecker msgTimeChecker;
 
 
     /**
@@ -78,18 +78,18 @@ public class Listener {
      * @param client         the client
      * @param rabbitTemplate the rabbit template
      */
-    public Listener(ApiClient client, fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
+    public Listener(ApiClient client, fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate, MsgTimeChecker msgTimeChecker) {
         super();
         this.rabbitTemplate = rabbitTemplate;
         this.client = client;
         this.amarClient = amarClient;
+        this.msgTimeChecker = msgTimeChecker;
         init();
     }
 
     private void init() {
         psapi = new PsApi(client);
         amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
-        msgTimeChecker = MsgTimeChecker.getInstance();
     }
 
     @RabbitListener(queues = QUEUE_PS_CREATE_MESSAGES)

@@ -42,9 +42,12 @@ public class PscListenerActivityController {
 
     private final RabbitAdmin rabbitAdmin;
 
+    private final MsgTimeChecker msgTimeChecker;
+
     @Autowired
-    public PscListenerActivityController(RabbitAdmin rabbitAdmin) {
+    public PscListenerActivityController(RabbitAdmin rabbitAdmin, MsgTimeChecker msgTimeChecker) {
         this.rabbitAdmin = rabbitAdmin;
+        this.msgTimeChecker = msgTimeChecker;
     }
 
     @GetMapping(value = "/check", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -54,7 +57,7 @@ public class PscListenerActivityController {
 
     @GetMapping(value = "/check-pending-messages", produces = MediaType.APPLICATION_JSON_VALUE)
     public Boolean isHandlingMessages() {
-        return hasQueuedMessages() || MsgTimeChecker.getInstance().hasRecentConsumptionTimestamp();
+        return hasQueuedMessages() || msgTimeChecker.hasRecentConsumptionTimestamp();
     }
 
     private boolean hasQueuedMessages() {
