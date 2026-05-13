@@ -27,15 +27,18 @@ import fr.ans.psc.ApiClient;
 @Configuration
 public class ApiClientConfig {
 
-	
+
 	@Value("${in.api.url:http://localhost/api/lura/ing/rass}")
 	private String inApiUrl;
-	
+
 	@Value("${psc.api.url:http://localhost/api}")
 	private String pscApiUrl;
 
 	@Value("${in.amar.url:http://localhost/api/lura}")
 	private String amarApiUrl;
+
+	@Value("${in.amar.api.key:}")
+	private String amarApiKey;
 
 	/**
 	 * Apiclient.
@@ -64,9 +67,10 @@ public class ApiClientConfig {
 	}
 
 	@Bean
-	public fr.ans.psc.amar.ApiClient amarApiClient() {
-		fr.ans.psc.amar.ApiClient client = new fr.ans.psc.amar.ApiClient();
+	public fr.ans.psc.amar.v2.ApiClient amarApiClient() {
+		fr.ans.psc.amar.v2.ApiClient client = new fr.ans.psc.amar.v2.ApiClient();
 		client.setBasePath(amarApiUrl);
+		client.addDefaultHeader("ANS-Api-Key", amarApiKey);
 		return client;
 	}
 }

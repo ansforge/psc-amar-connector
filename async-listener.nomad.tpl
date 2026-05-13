@@ -43,7 +43,6 @@ job "async-listener" {
       config {
         image = "${artifact.image}:${artifact.tag}"
         ports = ["http"]
-        extra_hosts = ["in.api.henix.asipsante.fr:192.168.43.99", "in.api.preprod.henix.asipsante.fr:192.168.43.99"]
       }
       template {
         data = <<EOF
@@ -55,6 +54,7 @@ spring.rabbitmq.username={{ with secret "psc-ecosystem/${nomad_namespace}/rabbit
 spring.rabbitmq.password={{ .Data.data.password }}{{ end }}
 spring.rabbitmq.listener.simple.default-requeue-rejected=false
 in.amar.url={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.amar_api_url }}{{ end }}
+in.amar.api.key={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.ans_api_key }}{{ end }}
 {{ range service "${nomad_namespace}-psc-api-maj-v2" }}psc.api.url=http://{{ .Address }}:{{ .Port }}/psc-api-maj/api{{ end }}
 amar.production.ready={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.send_to_amar }}{{ end }}
 EOF

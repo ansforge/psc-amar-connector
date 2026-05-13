@@ -15,7 +15,7 @@
  */
 package fr.ans.psc.asynclistener.model;
 
-import fr.ans.psc.amar.model.CivilStatus;
+import fr.ans.psc.amar.v2.model.CivilStatus;
 import fr.ans.psc.model.FirstName;
 import fr.ans.psc.model.Ps;
 
@@ -33,6 +33,8 @@ public class AmarCivilStatusAdapter extends CivilStatus {
         setBirthTownCode(AttributeEncoding.encodeStringAttribute(ps.getBirthAddressCode()));
         setGenderCode(AttributeEncoding.encodeStringAttribute(ps.getGenderCode()));
         setPersonalCivilityTitle(AttributeEncoding.encodeStringAttribute(ps.getSalutationCode()));
+        setEmail(AttributeEncoding.encodeStringAttribute(ps.getEmail()));
+        setPhone(AttributeEncoding.encodeStringAttribute(ps.getPhone()));
     }
 
     private List<String> extractNames(List<FirstName> firstNames) {

@@ -15,7 +15,7 @@
  */
 package fr.ans.psc.asynclistener.model;
 
-import fr.ans.psc.amar.model.*;
+import fr.ans.psc.amar.v2.model.*;
 import fr.ans.psc.model.Ps;
 
 import java.util.ArrayList;
@@ -26,7 +26,6 @@ public class AmarUserAdapter extends User {
     private final int DEFAULT_QUALITY = 1;
 
     public AmarUserAdapter(Ps ps) {
-        ContactInfo contactInfo = new AmarContactInfoAdapter(ps);
         CivilStatus civilStatus = new AmarCivilStatusAdapter(ps);
         List<Practice> practices = new ArrayList<>();
         ps.getProfessions().forEach(profession -> practices.add(new AmarPracticeAdapter(profession)));
@@ -41,7 +40,6 @@ public class AmarUserAdapter extends User {
         });
 
         setNationalId(AttributeEncoding.encodeStringAttribute(ps.getNationalId()));
-        setContactInfo(contactInfo);
         setCivilStatus(civilStatus);
         setPractices(practices);
         setAlternativeIdentifiers(alternativeIdentifiers);

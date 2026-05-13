@@ -16,7 +16,7 @@
 package fr.ans.psc.asynclistener;
 
 import com.google.gson.Gson;
-import fr.ans.psc.amar.model.User;
+import fr.ans.psc.amar.v2.model.User;
 import fr.ans.psc.asynclistener.model.AmarUserAdapter;
 import fr.ans.psc.model.Ps;
 import lombok.extern.slf4j.Slf4j;

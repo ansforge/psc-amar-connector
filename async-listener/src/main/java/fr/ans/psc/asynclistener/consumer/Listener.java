@@ -53,11 +53,11 @@ public class Listener {
 
     private final ApiClient client;
 
-    private final fr.ans.psc.amar.ApiClient amarClient;
+    private final fr.ans.psc.amar.v2.ApiClient amarClient;
 
     private PsApi psapi;
 
-    private fr.ans.psc.amar.api.UserApi amarUserApi;
+    private fr.ans.psc.amar.v2.api.TheUserApiApi amarUserApi;
 
     @Value("${amar.production.ready:false}")
     private boolean isSendToAMAR;
@@ -78,7 +78,7 @@ public class Listener {
      * @param client         the client
      * @param rabbitTemplate the rabbit template
      */
-    public Listener(ApiClient client, fr.ans.psc.amar.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
+    public Listener(ApiClient client, fr.ans.psc.amar.v2.ApiClient amarClient, RabbitTemplate rabbitTemplate) {
         super();
         this.rabbitTemplate = rabbitTemplate;
         this.client = client;
@@ -88,7 +88,7 @@ public class Listener {
 
     private void init() {
         psapi = new PsApi(client);
-        amarUserApi = new fr.ans.psc.amar.api.UserApi(amarClient);
+        amarUserApi = new fr.ans.psc.amar.v2.api.TheUserApiApi(amarClient);
         msgTimeChecker = MsgTimeChecker.getInstance();
     }
 
@@ -286,7 +286,7 @@ public class Listener {
             // call amar client : post /put
             if (isSendToAMAR) {
                 // we should use the PUT method because we want the job done without checking
-                amarUserApi.updateUser(amarUser, URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8));
+                amarUserApi.updateUser(URLEncoder.encode(amarUser.getNationalId(), StandardCharsets.UTF_8), amarUser);
                 log.debug("PS {} successfully stored in AMAR, routing key was {}",
                         queuedPs.getNationalId(),
                         message.getMessageProperties().getReceivedRoutingKey());
