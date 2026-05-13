@@ -47,7 +47,7 @@ public class AmarPracticeAdapter extends Practice {
         String[] acceptedExpertises = {"S", "CEX", "PAC"};
         List<Expertise> expertises = profession.getExpertises().stream()
                 .filter(expertise -> Arrays.stream(acceptedExpertises)
-                        .anyMatch(s -> expertise.getTypeCode().equals(s)))
+                        .anyMatch(s -> s.equals(expertise.getTypeCode())))
                 .collect(Collectors.toList());
 
         return expertises.isEmpty() ? null : expertises.get(0);
