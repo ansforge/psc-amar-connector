@@ -57,8 +57,22 @@ in.amar.url={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.da
 in.amar.api.key={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.ans_api_key }}{{ end }}
 {{ range service "${nomad_namespace}-psc-api-maj-v2" }}psc.api.url=http://{{ .Address }}:{{ .Port }}/psc-api-maj/api{{ end }}
 amar.production.ready={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.send_to_amar }}{{ end }}
+amar.cert.path=/secrets/amar-cert.pem
+amar.key.path=/secrets/amar-key.pem
 EOF
         destination = "secrets/application.properties"
+      }
+      template {
+        data = <<EOH
+{{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.amar_client_certificate }}{{ end }}
+EOH
+        destination = "secrets/amar-cert.pem"
+      }
+      template {
+        data = <<EOH
+{{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.amar_client_private_key }}{{ end }}
+EOH
+        destination = "secrets/amar-key.pem"
       }
       resources {
         cpu = 100

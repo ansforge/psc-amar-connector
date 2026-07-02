@@ -18,6 +18,11 @@ package fr.ans.psc.asynclistener.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.client.BufferingClientHttpRequestFactory;
+import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 import fr.ans.psc.ApiClient;
 
@@ -39,6 +44,12 @@ public class ApiClientConfig {
 
 	@Value("${in.amar.api.key:}")
 	private String amarApiKey;
+
+	private final AmarMtlsSslContextFactory amarMtlsSslContextFactory;
+
+	public ApiClientConfig(AmarMtlsSslContextFactory amarMtlsSslContextFactory) {
+		this.amarMtlsSslContextFactory = amarMtlsSslContextFactory;
+	}
 
 	/**
 	 * Apiclient.
@@ -68,7 +79,20 @@ public class ApiClientConfig {
 
 	@Bean
 	public fr.ans.psc.amar.v2.ApiClient amarApiClient() {
-		fr.ans.psc.amar.v2.ApiClient client = new fr.ans.psc.amar.v2.ApiClient();
+		// mTLS : si un certificat client AMAR est configuré, on présente le certificat via une
+		// request factory dédiée ; sinon on garde la factory par défaut (TLS simple, dev local).
+		// On reproduit la config du buildRestTemplate() du client généré (buffering + encodage
+		// URL VALUES_ONLY) : le Listener encode déjà nationalId à la main, VALUES_ONLY évite un
+		// double-encodage.
+		ClientHttpRequestFactory baseFactory = amarMtlsSslContextFactory.createRequestFactory()
+				.orElseGet(SimpleClientHttpRequestFactory::new);
+		RestTemplate restTemplate = new RestTemplate();
+		restTemplate.setRequestFactory(new BufferingClientHttpRequestFactory(baseFactory));
+		DefaultUriBuilderFactory uriBuilderFactory = new DefaultUriBuilderFactory();
+		uriBuilderFactory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+		restTemplate.setUriTemplateHandler(uriBuilderFactory);
+
+		fr.ans.psc.amar.v2.ApiClient client = new fr.ans.psc.amar.v2.ApiClient(restTemplate);
 		client.setBasePath(amarApiUrl);
 		client.addDefaultHeader("ANS-Api-Key", amarApiKey);
 		return client;
