@@ -28,16 +28,20 @@ public class AmarUserAdapter extends User {
     public AmarUserAdapter(Ps ps) {
         CivilStatus civilStatus = new AmarCivilStatusAdapter(ps);
         List<Practice> practices = new ArrayList<>();
-        ps.getProfessions().forEach(profession -> practices.add(new AmarPracticeAdapter(profession)));
+        if (ps.getProfessions() != null) {
+            ps.getProfessions().forEach(profession -> practices.add(new AmarPracticeAdapter(profession)));
+        }
         List<AlternativeIdentifier> alternativeIdentifiers = new ArrayList<>();
-        ps.getIds().forEach(id ->
-        {
-            AlternativeIdentifier identifier = new AlternativeIdentifier();
-            identifier.setIdentifier(id);
-            identifier.setOrigine(getOriginFromId(id));
-            identifier.setQuality(DEFAULT_QUALITY);
-            alternativeIdentifiers.add(identifier);
-        });
+        if (ps.getIds() != null) {
+            ps.getIds().forEach(id ->
+            {
+                AlternativeIdentifier identifier = new AlternativeIdentifier();
+                identifier.setIdentifier(id);
+                identifier.setOrigine(getOriginFromId(id));
+                identifier.setQuality(DEFAULT_QUALITY);
+                alternativeIdentifiers.add(identifier);
+            });
+        }
 
         setNationalId(AttributeEncoding.encodeStringAttribute(ps.getNationalId()));
         setCivilStatus(civilStatus);
