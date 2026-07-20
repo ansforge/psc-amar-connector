@@ -59,6 +59,7 @@ in.amar.api.key={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Dat
 amar.production.ready={{ with secret "psc-ecosystem/${nomad_namespace}/amar" }}{{ .Data.data.send_to_amar }}{{ end }}
 amar.cert.path=/secrets/amar-cert.pem
 amar.key.path=/secrets/amar-key.pem
+logging.level.fr.ans.psc.asynclistener=DEBUG
 EOF
         destination = "secrets/application.properties"
       }
